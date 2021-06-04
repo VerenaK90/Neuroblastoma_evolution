@@ -1,0 +1,6 @@
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_1.R")
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_2.R")
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_3.R")
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_4.R")
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_5.R")
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_6.R")
