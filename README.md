@@ -1,12 +1,9 @@
 # Neuroblastoma_evolution
 
-This repository contains custom code associated with the manuscript "Evolutionary dynamics of neuroblastoma" by Verena Körber et al.
+This repository contains custom code associated with the manuscript "Genetic origin of neuroblastoma in early embryogenesis" by Verena Körber et al.
 
-Folder Mutation_density contains scripts for estimating the mutation densities at MRCA and ECA. Associated example data (copy number information and SNVs) is provided in the folder Example_data.
+The folder Functions contains function scripts written for the analysis. In the folder Analysis_and_plots you can find scripts to analyze the data with these functions and scripts for plotting. Associated example data (copy number information and SNVs) is provided in the folder Example_data.
 
-Folder Modeling_tumor_initiation contains scripts to fit a model of neuroblastoma initiation to estimated mutation densities at MRCA and ECA. 
-
-Folder Modeling_tumor_progression contains scripts to fit a model of neutral mutation accumulation to a measured VAF-distribution. 
 
 Software requirements:
 
