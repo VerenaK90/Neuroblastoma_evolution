@@ -49,7 +49,7 @@ dev.off()
 
 
 ##############################################################################################################################################
-## Figure 2d-f and Fig. S2c-e: density plots per genomic segment for NBE15, NBE14, NBE44, NBE99
+## Figure 2d-f and Fig. S2c,d,e: density plots per genomic segment for NBE15, NBE14, NBE44, NBE99
 
 
 ## manually set the range 
@@ -87,11 +87,11 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
       addWorksheet(wb, panel)
       writeData(wb, panel, to.plot)
     }else if(i=="NBE14"){
-      panel="c"
+      panel="d"
       addWorksheet(wb.s, panel)
       writeData(wb.s, panel, to.plot)
     }else if(i=="NBE99"){
-      panel="d"
+      panel="c"
       addWorksheet(wb.s, panel)
       writeData(wb.s, panel, to.plot)
     }else{
@@ -155,7 +155,7 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
   }
   
   if(i == "NBE14"){
-    pdf(paste0(panel.directory, "Figure_S2c.pdf"))
+    pdf(paste0(panel.directory, "Figure_S2d.pdf"))
     
     p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=x)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
       scale_y_continuous(name="# Genomic segments") + 
@@ -242,7 +242,7 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
   }
   
   if(i == "NBE99"){
-    pdf(paste0(panel.directory, "Figure_S2d.pdf"))
+    pdf(paste0(panel.directory, "Figure_S2c.pdf"))
     
     p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=x)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
       scale_y_continuous(name="# Genomic segments") + 
@@ -336,8 +336,294 @@ print(p)
 dev.off()
 
 
+##############################################################################################################################################
+## Figure S2b_d_f_h: density distributions for MRCA and ECA - detection data set
+source(paste0(custom.script.directory, "Oncoprint.R"))
+
+## if ECA was not uniquely identified, take the earliest time point
+mutation.time.eca[names(earliest.mutation.time)] <- earliest.mutation.time
+mutation.time.eca.lower[names(earliest.mutation.time)] <- earliest.mutation.time.lower
+mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time.upper
+####
+
+colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
+
+max.mutation.time.primary <- max(mutation.time.mrca[sample.information.80x$Patient_ID[sample.information.80x$Location=="Primary" &
+                                                                                               sample.information.80x$Treatment==FALSE]], na.rm=T)
+
+sample.information.80x$Telomere.maintenance.mechanism <- factor(sample.information.80x$Telomere.maintenance.mechanism,
+                                                                levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+
+##### Primary tumors, with and without treatment, metastases
+## Plot different ploidies with ECA, merge di- and tetraploids
+
+p1 <- list()
+p1.subset.list <- list()
+
+for(ploidy in c("triploid", "di-tetraploid")){
+  
+  if(ploidy=="triploid"){
+    ploidy <- 3
+  }else{
+    ploidy <- c(2,4)
+  }
+  
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
+                                   sample.information.80x$ECA.exists==T &
+                                   sample.information.80x$Ploidy %in% ploidy,,drop=F]
+  
+  if(nrow(subset)==0){next}
+  
+  
+  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
+                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+  
+  subset$MRCAtime <- mutation.time.mrca[subset$Patient_ID]
+  subset <- subset[order(subset$MRCAtime),]
+  
+  
+  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[subset$Patient_ID]/3.3/10^3,
+                                      ECA=mutation.time.eca[subset$Patient_ID]/3.3/10^3,
+                                      MRCA.upper=mutation.time.mrca.upper[subset$Patient_ID]/3.3/10^3,
+                                      MRCA.lower=mutation.time.mrca.lower[subset$Patient_ID]/3.3/10^3,
+                                      ECA.upper=mutation.time.eca.upper[subset$Patient_ID]/3.3/10^3,
+                                      ECA.lower=mutation.time.eca.lower[subset$Patient_ID]/3.3/10^3))
+  
+  
+  
+  if(ploidy%in%c(2,4)){
+    panel="d_population_summary"
+  }else if(ploidy==3){
+    panel="b"
+  }
+  
+  addWorksheet(wb.s, panel)
+  writeData(wb.s, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
+  
+  
+  
+  p1[[length(p1)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
+                                     aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
+                                         ymin =  sapply(sort(MRCA), function(x){
+                                           sum(MRCA.upper <= x)
+                                         })/length(MRCA),
+                                         ymax= sapply(sort(MRCA), function(x){
+                                           sum(MRCA.lower <= x)
+                                         })/length(MRCA)
+                                     )) +
+    stat_ecdf(col=unname(manual.colors["Late"])) +
+    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA)+
+    scale_x_continuous(name = "Mutations/Mb",
+                       limits=c(0, max.mutation.time.primary/3.3/10^3))+
+    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
+    ggtitle(paste("# Cases = ", nrow(subset))) + 
+      stat_ecdf(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
+                aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA))
+                ),
+                col=unname(manual.colors["Early"])) +
+      geom_stepribbon(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
+                      aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA)),
+                          ymin =  sapply(sort(ECA), function(x){
+                            sum(ECA.upper <= x)
+                          })/length(ECA),
+                          ymax= sapply(sort(ECA), function(x){
+                            sum(ECA.lower <= x)
+                          })/length(ECA)
+                      ),
+                      fill=unname(manual.colors["Early"]), alpha=0.5, col=NA) 
+
+  
+  ## TMM, Clinical subtype & CNVs
+  to.plot. <- subset[,c("MRCAtime", "Telomere.maintenance.mechanism", "ManualScore", "Ploidy")]
+  to.plot.$xmin <-c(0, (to.plot.$MRCAtime/3.3/10^3)[-length(to.plot.$MRCAtime)])
+  to.plot.$xmax <- to.plot.$MRCAtime/3.3/10^3
+  to.plot.$ymin <- 0
+  to.plot.$ymax <- 0.23
+  
+  to.plot.[,c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")] <- t(matrix.early.late[c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"),
+                                                                                                 rownames(to.plot.)])
+  
+  ## distinguish cases that are not dateable from cases that are statistically insigniicant from ECA
+  for(chr.change in c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")){
+    tmp <- not.dateable[not.dateable$Gain==chr.change,]
+    to.plot.[intersect(rownames(to.plot.), tmp$Sample),chr.change] <- "n.d."
+  }
+  
+  to.plot.[to.plot.=="early late"] <- "Early"
+  to.plot.[to.plot.=="early"] <- "Early"
+  to.plot.[to.plot.==" late"] <- "Late"
+  to.plot.[to.plot.=="early tetraploid"] <- "n.d."
+  to.plot.[to.plot.==" late tetraploid"] <- "n.d."
+  to.plot.$`1p`[to.plot.$`1p` %in% c("Early", "Late")] <- "n.d."
+  to.plot.$`11q`[to.plot.$`11q` %in% c("Early", "Late")] <- "n.d."
+  
+  ## equal sizes for boxes
+  to.plot.$xmax <- (1:nrow(to.plot.))/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  to.plot.$xmin <- ((1:nrow(to.plot.))-1)/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  
+  p1.subset.list[[length(p1.subset.list) + 1]] <- ggplot(data=to.plot.,
+                                                               aes(xmin=xmin, xmax=xmax,
+                                                                   ymin=ymin, ymax=ymax,
+                                                                   fill=as.character(Telomere.maintenance.mechanism))) +
+    geom_rect() +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.27, ymax=ymin+0.48, fill=ManualScore), inherit.aes = F) +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.5, ymax=ymin+0.73, fill=as.character(Ploidy)), inherit.aes = F) +
+    scale_fill_manual(values=c(telomere.colors, clinical.risk.colors, manual.colors, "Subclonal"="purple", "n.d."="grey",
+                               ploidy.cols)) +
+    scale_x_continuous(limits=c(0, max.mutation.time.primary/3.3/10^3)) +
+    theme(legend.position = "bottom") +
+    scale_y_continuous(breaks=seq(0.125, 3.125, 0.25),
+                       labels=c("TMM", "Stage", "Ploidy", rev(c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"))))
+  
+  for(chr.change in rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))){
+    
+    index <- which(rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))==chr.change)
+    to.plot.$ymin <- 0.75 + 0.25*(index - 1)+0.2
+    to.plot.$ymax <- 0.75 + 0.25*index-0.2
+    
+    p1.subset.list[[length(p1.subset.list)]] <- p1.subset.list[[length(p1.subset.list)]] +
+      geom_rect(data=to.plot., aes_string(xmin="xmin", xmax="xmax", ymin="ymin", ymax="ymax", fill=chr.change), inherit.aes=T)
+  }
+  
+  
+  
+}
+
+
+## Plot the cases without ECA separately per ploidy; merge di- and tetraploids
+p2 <- list()
+p2.subset.list <- list()
+
+for(ploidy in c("triploid", "di-tetraploid")){
+  
+  if(ploidy=="triploid"){
+    ploidy <- 3
+  }else{
+    ploidy <- c(2,4)
+  }
+  
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
+                                   sample.information.80x$ECA.exists==F &
+                                   sample.information.80x$Ploidy %in% ploidy,,drop=F]
+  
+  if(nrow(subset)==0){next}
+  
+  
+  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
+                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+  
+  subset$MRCAtime <- mutation.time.mrca[subset$Patient_ID]
+  subset <- subset[order(subset$MRCAtime),]
+  
+  
+  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[subset$Patient_ID]/3.3/10^3,
+                                      ECA=mutation.time.eca[subset$Patient_ID]/3.3/10^3,
+                                      MRCA.upper=mutation.time.mrca.upper[subset$Patient_ID]/3.3/10^3,
+                                      MRCA.lower=mutation.time.mrca.lower[subset$Patient_ID]/3.3/10^3,
+                                      ECA.upper=mutation.time.eca.upper[subset$Patient_ID]/3.3/10^3,
+                                      ECA.lower=mutation.time.eca.lower[subset$Patient_ID]/3.3/10^3))
+  
+  
+  
+  if(ploidy%in%c(2,4)){
+    panel="e_population_summary"
+  }else if(ploidy==3){
+    panel="c_population_summary"
+  }
+  
+  addWorksheet(wb.s, panel)
+  writeData(wb.s, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
+  
+  
+  
+  p2[[length(p2)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
+                                                       aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
+                                                           ymin =  sapply(sort(MRCA), function(x){
+                                                             sum(MRCA.upper <= x)
+                                                           })/length(MRCA),
+                                                           ymax= sapply(sort(MRCA), function(x){
+                                                             sum(MRCA.lower <= x)
+                                                           })/length(MRCA)
+                                                       )) +
+    stat_ecdf(col=unname(manual.colors["Late"])) +
+    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA)+
+    scale_x_continuous(name = "Mutations/Mb",
+                       limits=c(0, max.mutation.time.primary/3.3/10^3))+
+    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
+    ggtitle(paste("# Cases = ", nrow(subset)))
+  
+  ## TMM, Clinical subtype & CNVs
+  to.plot. <- subset[,c("MRCAtime", "Telomere.maintenance.mechanism", "ManualScore", "Ploidy")]
+  to.plot.$xmin <-c(0, (to.plot.$MRCAtime/3.3/10^3)[-length(to.plot.$MRCAtime)])
+  to.plot.$xmax <- to.plot.$MRCAtime/3.3/10^3
+  to.plot.$ymin <- 0
+  to.plot.$ymax <- 0.23
+  
+  to.plot.[,c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")] <- t(matrix.early.late[c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"),
+                                                                                                 rownames(to.plot.)])
+  
+  ## distinguish cases that are not dateable from cases that are statistically insignificant from ECA
+  for(chr.change in c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")){
+    tmp <- not.dateable[not.dateable$Gain==chr.change,]
+    to.plot.[intersect(rownames(to.plot.), tmp$Sample),chr.change] <- "n.d."
+  }
+  
+  to.plot.[to.plot.=="early late"] <- "Early"
+  to.plot.[to.plot.=="early"] <- "Early"
+  to.plot.[to.plot.==" late"] <- "Late"
+  to.plot.[to.plot.=="early tetraploid"] <- "n.d."
+  to.plot.[to.plot.==" late tetraploid"] <- "n.d."
+  to.plot.$`1p`[to.plot.$`1p` %in% c("Early", "Late")] <- "n.d."
+  to.plot.$`11q`[to.plot.$`11q` %in% c("Early", "Late")] <- "n.d."
+  
+  ## equal sizes for boxes
+  to.plot.$xmax <- (1:nrow(to.plot.))/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  to.plot.$xmin <- ((1:nrow(to.plot.))-1)/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  
+  p2.subset.list[[length(p2.subset.list) + 1]] <- ggplot(data=to.plot.,
+                                                                                 aes(xmin=xmin, xmax=xmax,
+                                                                                     ymin=ymin, ymax=ymax,
+                                                                                     fill=as.character(Telomere.maintenance.mechanism))) +
+    geom_rect() +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.27, ymax=ymin+0.48, fill=ManualScore), inherit.aes = F) +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.5, ymax=ymin+0.73, fill=as.character(Ploidy)), inherit.aes = F) +
+    scale_fill_manual(values=c(telomere.colors, clinical.risk.colors, manual.colors, "Subclonal"="purple", "n.d."="grey",
+                               ploidy.cols)) +
+    scale_x_continuous(limits=c(0, max.mutation.time.primary/3.3/10^3)) +
+    theme(legend.position = "bottom") +
+    scale_y_continuous(breaks=seq(0.125, 3.125, 0.25),
+                       labels=c("TMM", "Stage", "Ploidy", rev(c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"))))
+  
+  for(chr.change in rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))){
+    
+    index <- which(rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))==chr.change)
+    to.plot.$ymin <- 0.75 + 0.25*(index - 1)+0.2
+    to.plot.$ymax <- 0.75 + 0.25*index-0.2
+    
+    p2.subset.list[[length(p2.subset.list)]] <- p2.subset.list[[length(p2.subset.list)]] +
+      geom_rect(data=to.plot., aes_string(xmin="xmin", xmax="xmax", ymin="ymin", ymax="ymax", fill=chr.change), inherit.aes=T)
+  }
+  
+  
+  
+}
+
+
+pdf(paste0(panel.directory, "Figure_S2_b_c_d_e_population_summary.pdf"), width=9, height=9, useDingbats = F)
+
+figure <- ggarrange(plotlist=c(p1, p2), nrow=3, ncol=3)
+annotate_figure(figure, top="Primary tumor / Metastasis")
+
+figure <- ggarrange(plotlist=c(p1.subset.list, p2.subset.list), nrow=3, ncol=3)
+annotate_figure(figure, top="Primary tumor / Metastasis")
+
+dev.off()
+
+
 ##########################################################################################################################################
-#### Figure S2b: # of events for triploidization
+#### Figure S2f: # of events for triploidization
 
 mutation.time.eca[is.na(mutation.time.eca)] <- mutation.time.mrca[is.na(mutation.time.eca)]
 
@@ -391,31 +677,7 @@ for(i in triploid.tumors.80x){
   }
 }
 
-pdf(paste0(panel.directory,"Figure_S2b.pdf"), width=2, height=2.2, useDingbats = F)
 
-to.plot <- data.frame(Chromosomes=numbers.of.3n.chromosomes.at.single.event/numbers.of.3n.chromosomes,
-                      Tumor=triploid.tumors.80x,
-                      Telomere.type=telomere.classification.80x[triploid.tumors.80x],
-                      Time = sample.information.80x[triploid.tumors.80x,]$Location,
-                      Ploidy=3)
-
-
-panel="b"
-addWorksheet(wb.s, panel)
-writeData(wb.s, panel, to.plot)
-
-
-ggplot(to.plot, aes(x=Ploidy, y=Chromosomes,group=Ploidy)) + geom_boxplot(width=0.5) + geom_beeswarm() + scale_y_continuous(limits=c(0,1.01))+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
-        panel.background = element_blank(), axis.line = element_line(colour = "black"))
-
-
-dev.off()
-
-
-##########################################################################################################################################
-#### Figure S2b: # of events for tetraploidization
-## For each ploidy: can we assign most polyploidization events to a single event? 
 numbers.of.4n.chromosomes.at.single.event <- c()
 numbers.of.4n.chromosomes <- c()
 not.conforming.chromosomes <- list()
@@ -454,7 +716,7 @@ for(i in tetraploid.tumors.80x){
     tmp <- sapply(intersect(tmp, dominating.copy.number.per.chromosome), function(x){strsplit(x, split="_")[[1]][3]})
     
     tmp.2 <- c(setdiff(c(gains.at.mrca[[i]], gains.not.maping.to.eca.or.mrca[[i]][mutation.time.most.likely[[i]][gains.not.maping.to.eca.or.mrca[[i]]] >=
-                                                                                      mutation.time.mrca[i]]), gains.at.mrca.conforming.eca[[i]]), 
+                                                                                    mutation.time.mrca[i]]), gains.at.mrca.conforming.eca[[i]]), 
                gains.not.maping.to.eca.or.mrca[[i]][mutation.time.most.likely[[i]][gains.not.maping.to.eca.or.mrca[[i]]] < mutation.time.mrca[i]])
     
     tmp.2 <- intersect(tmp.2, dominating.copy.number.per.chromosome)
@@ -471,11 +733,17 @@ for(i in tetraploid.tumors.80x){
 
 pdf(paste0(panel.directory,"Figure_S2f.pdf"), width=2, height=2.2, useDingbats = F)
 
-to.plot <- data.frame(Chromosomes=numbers.of.4n.chromosomes.at.single.event/numbers.of.4n.chromosomes,
-                      Tumor=tetraploid.tumors.80x,
-                      Telomere.type=telomere.classification.80x[tetraploid.tumors.80x],
-                      Time = sample.information.80x[tetraploid.tumors.80x,]$Location,
-                      Ploidy=4)
+to.plot <- rbind(data.frame(Chromosomes=numbers.of.3n.chromosomes.at.single.event/numbers.of.3n.chromosomes,
+                            Tumor=triploid.tumors.80x,
+                            Telomere.type=telomere.classification.80x[triploid.tumors.80x],
+                            Time = sample.information.80x[triploid.tumors.80x,]$Location,
+                            Ploidy=3),
+                 data.frame(Chromosomes=numbers.of.4n.chromosomes.at.single.event/numbers.of.4n.chromosomes,
+                            Tumor=tetraploid.tumors.80x,
+                            Telomere.type=telomere.classification.80x[tetraploid.tumors.80x],
+                            Time = sample.information.80x[tetraploid.tumors.80x,]$Location,
+                            Ploidy=4))
+
 
 panel="f"
 addWorksheet(wb.s, panel)
@@ -489,299 +757,6 @@ ggplot(to.plot, aes(x=Ploidy, y=Chromosomes,group=Ploidy)) + geom_boxplot(width=
 
 dev.off()
 
-
-
-##############################################################################################################################################
-## Figure 2g-i: density distributions for MRCA and ECA - detection data set
-source(paste0(custom.script.directory, "Oncoprint.R"))
-
-## if ECA was not uniquely identified, take the earliest time point
-mutation.time.eca[names(earliest.mutation.time)] <- earliest.mutation.time
-mutation.time.eca.lower[names(earliest.mutation.time)] <- earliest.mutation.time.lower
-mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time.upper
-####
-
-colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
-
-max.mutation.time.primary <- max(mutation.time.mrca[sample.information.80x$Patient_ID[sample.information.80x$Location=="Primary" &
-                                                                                               sample.information.80x$Treatment==FALSE]], na.rm=T)
-
-sample.information.80x$Telomere.maintenance.mechanism <- factor(sample.information.80x$Telomere.maintenance.mechanism,
-                                                                levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
-
-##### Primary tumors, with and without treatment, metastases
-## Plot the cases with ECA separately per ploidy; merge di- and the tetraploid case.
-
-p1 <- list()
-p1.subset.list <- list()
-
-for(i in c("triploid", "di/tetraploid")){
-  
-  if(i=="di/tetraploid"){
-    i <- c(2,4)
-  }else{
-    i <- 3
-  }
-  print(i)
-  
-  subset=sample.information.80x[sample.information.80x$Ploidy %in% i & sample.information.80x$Location %in% c("Primary", "Metastasis") &
-                                  sample.information.80x$ECA.exists==TRUE,,drop=F]
-  
-  if(nrow(subset)==0){next}
-  
-  
-  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
-                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
-  
-  subset$MRCAtime <- mutation.time.mrca[subset$Patient_ID]
-  subset <- subset[order(subset$MRCAtime),]
-  
-  
-  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[ subset$Patient_ID]/3.3/10^3,
-                                      ECA=mutation.time.eca[subset$Patient_ID]/3.3/10^3,
-                                      MRCA.upper=mutation.time.mrca.upper[subset$Patient_ID]/3.3/10^3,
-                                      MRCA.lower=mutation.time.mrca.lower[subset$Patient_ID]/3.3/10^3,
-                                      ECA.upper=mutation.time.eca.upper[ subset$Patient_ID]/3.3/10^3,
-                                      ECA.lower=mutation.time.eca.lower[ subset$Patient_ID]/3.3/10^3))
-  
-  
-  
-  if(i%in%c(2,4)){
-    panel="h"
-  }else if(i==3){
-    panel="g"
-  }
-  
-  addWorksheet(wb, panel)
-  writeData(wb, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
-  
-  
-  
-  p1[[length(p1)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
-                               aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
-                                   ymin =  sapply(sort(MRCA), function(x){
-                                     sum(MRCA.upper <= x)
-                                   })/length(MRCA),
-                                   ymax= sapply(sort(MRCA), function(x){
-                                     sum(MRCA.lower <= x)
-                                   })/length(MRCA)
-                               )) +
-    stat_ecdf(col=unname(manual.colors["Late"])) +
-    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA)+
-    stat_ecdf(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
-              aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA))
-              ),
-              col=unname(manual.colors["Early"])) +
-    geom_stepribbon(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
-                    aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA)),
-                        ymin =  sapply(sort(ECA), function(x){
-                          sum(ECA.upper <= x)
-                        })/length(ECA),
-                        ymax= sapply(sort(ECA), function(x){
-                          sum(ECA.lower <= x)
-                        })/length(ECA)
-                    ),
-                    fill=unname(manual.colors["Early"]), alpha=0.5, col=NA) +
-    scale_x_continuous(name = "Mutations/Mb",
-                       limits=c(0, max.mutation.time.primary/3.3/10^3))+
-    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
-    ggtitle(paste("Ploidy =",i, " # Cases = ", nrow(subset)))
-  
-  ## TMM, Clinical subtype & CNVs
-  to.plot. <- subset[,c("MRCAtime", "Telomere.maintenance.mechanism", "ManualScore")]
-  to.plot.$xmin <-c(0, (to.plot.$MRCAtime/3.3/10^3)[-length(to.plot.$MRCAtime)])
-  to.plot.$xmax <- to.plot.$MRCAtime/3.3/10^3
-  to.plot.$ymin <- 0
-  to.plot.$ymax <- 0.23
-  
-  to.plot.[,c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q")] <- matrix.early.late[c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q"),
-                                                                                               rownames(to.plot.)]
-  
-  ## distinguish cases that are not dateable from cases that are statistically insigniicant from ECA
-  for(chr.change in c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q")){
-    tmp <- not.dateable[not.dateable$Gain==chr.change,]
-    to.plot.[intersect(rownames(to.plot.), tmp$Sample),chr.change] <- "n.d."
-  }
-  
-  to.plot.[to.plot.=="early late"] <- "Early"
-  to.plot.[to.plot.=="early"] <- "Early"
-  to.plot.[to.plot.==" late"] <- "Late"
-  to.plot.[to.plot.=="early tetraploid"] <- "n.d."
-  to.plot.[to.plot.==" late tetraploid"] <- "n.d."
-  to.plot.$`1p`[to.plot.$`1p` %in% c("Early", "Late")] <- "n.d."
-  to.plot.$`11q`[to.plot.$`11q` %in% c("Early", "Late")] <- "n.d."
-  
-  ## equal sizes for boxes
-  to.plot.$xmax <- (1:nrow(to.plot.))/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
-  to.plot.$xmin <- ((1:nrow(to.plot.))-1)/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
-  
-  p1.subset.list[[length(p1.subset.list) + 1]] <- ggplot(data=to.plot.,
-                                                         aes(xmin=xmin, xmax=xmax,
-                                                             ymin=ymin, ymax=ymax,
-                                                             fill=as.character(Telomere.maintenance.mechanism))) +
-    geom_rect() +
-    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.27, ymax=ymin+0.48, fill=ManualScore), inherit.aes = F) +
-    scale_fill_manual(values=c(telomere.colors, clinical.risk.colors, manual.colors, "Subclonal"="purple", "n.d."="grey")) +
-    scale_x_continuous(limits=c(0, max.mutation.time.primary/3.3/10^3)) +
-    theme(legend.position = "bottom") +
-    scale_y_continuous(breaks=seq(0.125, 2.875, 0.25),
-                       labels=c("Stage", "TMM", rev(c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q"))))
-  
-  for(chr.change in rev(c("`17q`", "`17`", "`1p`", "`1q`", "`1`", "`7q`", "`7`", "`2p`", "`2`", "`11q`"))){
-    
-    index <- which(rev(c("`17q`", "`17`", "`1p`", "`1q`", "`1`", "`7q`", "`7`", "`2p`", "`2`", "`11q`"))==chr.change)
-    to.plot.$ymin <- 0.5 + 0.25*(index - 1)+0.2
-    to.plot.$ymax <- 0.5 + 0.25*index-0.2
-    
-    p1.subset.list[[length(p1.subset.list)]] <- p1.subset.list[[length(p1.subset.list)]] +
-      geom_rect(data=to.plot., aes_string(xmin="xmin", xmax="xmax", ymin="ymin", ymax="ymax", fill=chr.change), inherit.aes=T)
-  }
-  
-  
-  
-}
-
-
-## Plot the cases without ECA separately per ploidy; merge di- and tetraploids
-
-p2 <- list()
-p2.subset.list <- list()
-
-for(i in c("triploid", "di/tetraploid")){
-  
-  if(i=="di/tetraploid"){
-    i <- c(2,4)
-  }else{
-    i <- 3
-  }
-  
-  
-  
-  subset=sample.information.80x[sample.information.80x$Ploidy %in% i & sample.information.80x$Location %in% c("Primary", "Metastasis") &
-                                  sample.information.80x$ECA.exists==FALSE,,drop=F]
-  
-  if(nrow(subset)==0){next}
-  
-  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
-                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
-  
-  
-  subset$MRCAtime <- mutation.time.mrca[ subset$Patient_ID]
-  subset <- subset[order(subset$MRCAtime),]
-  
-  
-  
-  
-  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[ subset$Patient_ID]/3.3/10^3,
-                                      ECA=mutation.time.eca[subset$Patient_ID]/3.3/10^3,
-                                      MRCA.upper=mutation.time.mrca.upper[ subset$Patient_ID]/3.3/10^3,
-                                      MRCA.lower=mutation.time.mrca.lower[ subset$Patient_ID]/3.3/10^3,
-                                      ECA.upper=mutation.time.eca.upper[ subset$Patient_ID]/3.3/10^3,
-                                      ECA.lower=mutation.time.eca.lower[ subset$Patient_ID]/3.3/10^3))
-  
-  
-  ## export the source data
-  if(i==2){
-    
-    
-    panel="j"
-    
-    addWorksheet(wb, panel)
-    writeData(wb, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
-    
-  }else{
-    panel="i"
-    
-    addWorksheet(wb, panel)
-    writeData(wb, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
-    
-  }
-  
-  
-  p2[[length(p2)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
-                               aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
-                                   ymin =  sapply(sort(MRCA), function(x){
-                                     sum(MRCA.upper <= x)
-                                   })/length(MRCA),
-                                   ymax= sapply(sort(MRCA), function(x){
-                                     sum(MRCA.lower <= x)
-                                   })/length(MRCA)
-                               )) +
-    stat_ecdf(col=unname(manual.colors["Late"])) +
-    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA) +
-    scale_x_continuous(name = "Mutations/Mb", limits=c(0, max.mutation.time.primary/3.3/10^3))+
-    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
-    ggtitle(paste("Ploidy =",i, ", # Cases = ", nrow(subset)))
-  
-  
-  ## TMM, Clinical subtype & CNVs
-  to.plot. <- subset[,c("MRCAtime", "Telomere.maintenance.mechanism", "ManualScore")]
-  to.plot.$xmin <-c(0, (to.plot.$MRCAtime/3.3/10^3)[-length(to.plot.$MRCAtime)])
-  to.plot.$xmax <- to.plot.$MRCAtime/3.3/10^3
-  to.plot.$ymin <- 0.02
-  to.plot.$ymax <- 0.23
-  
-  to.plot.[,c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q")] <- t(matrix.early.late[c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q"),
-                                                                                                 rownames(to.plot.)])
-  
-  ## distinguish cases that are not dateable from cases that are statistically insigniicant from ECA
-  for(chr.change in c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q")){
-    tmp <- not.dateable[not.dateable$Gain==chr.change,]
-    to.plot.[intersect(rownames(to.plot.), tmp$Sample),chr.change] <- "n.d."
-  }
-  
-  to.plot.[to.plot.=="early late"] <- "Early"
-  to.plot.[to.plot.=="early"] <- "Early"
-  to.plot.[to.plot.==" late"] <- "Late"
-  to.plot.[to.plot.=="early tetraploid"] <- "n.d."
-  to.plot.[to.plot.==" late tetraploid"] <- "n.d."
-  to.plot.$`1p`[to.plot.$`1p` %in% c("Early", "Late")] <- "n.d."
-  to.plot.$`11q`[to.plot.$`11q` %in% c("Early", "Late")] <- "n.d."
-  
-  ## equal sizes for boxes
-  to.plot.$xmax <- (1:nrow(to.plot.))/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
-  to.plot.$xmin <- ((1:nrow(to.plot.))-1)/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
-  
-  p2.subset.list[[length(p2.subset.list) + 1]] <- ggplot(data=to.plot.,
-                                                         aes(xmin=xmin, xmax=xmax,
-                                                             ymin=ymin, ymax=ymax,
-                                                             fill=as.character(Telomere.maintenance.mechanism))) +
-    geom_rect() +
-    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.27, ymax=ymin+0.48, fill=ManualScore), inherit.aes = F) +
-    scale_fill_manual(values=c(telomere.colors, clinical.risk.colors, manual.colors, "n.d." = "grey")) +
-    scale_x_continuous(limits=c(0, max.mutation.time.primary/3.3/10^3)) +
-    theme(legend.position = "bottom") +
-    scale_y_continuous(breaks=seq(0.125, 2.875, 0.25),
-                       labels=c("Stage", "TMM", rev(c("17q", "17", "1p", "1q", "1", "7q", "7", "2p", "2", "11q"))))
-  
-  for(chr.change in rev(c("`17q`", "`17`", "`1p`", "`1q`", "`1`", "`7q`", "`7`", "`2p`", "`2`", "`11q`"))){
-    
-    index <- which(rev(c("`17q`", "`17`", "`1p`", "`1q`", "`1`", "`7q`", "`7`", "`2p`", "`2`", "`11q`"))==chr.change)
-    to.plot.$ymin <- 0.5 + 0.25*(index - 1) + 0.02
-    to.plot.$ymax <- 0.5 + 0.25*index - 0.02
-    
-    p2.subset.list[[length(p2.subset.list)]] <- p2.subset.list[[length(p2.subset.list)]] +
-      geom_rect(data=to.plot., aes_string(xmin="xmin", xmax="xmax", ymin="ymin", ymax="ymax", fill=chr.change), inherit.aes=T)
-  }
-  
-}
-
-
-
-
-pdf(paste0(panel.directory, "Figure_2g_h_i_j.pdf"), width=9, height=9, useDingbats = F)
-
-figure <- ggarrange(plotlist=c(p1,p2), nrow=3, ncol=3)
-annotate_figure(figure, top="Primary tumor / Metastasis")
-
-figure <- ggarrange(plotlist=c(p1.subset.list,p2.subset.list), nrow=3, ncol=3)
-annotate_figure(figure, top="Primary tumor / Metastasis")
-
-
-
-dev.off()
 
 
 ##############################################################################################################################################
@@ -821,7 +796,7 @@ ggplot(to.plot[to.plot$ECA!=to.plot$MRCA,], aes(x=Time, y=ECA, col=as.character(
                     labels=c("Primary untreated", "Primary treated", "Metastasis"))+ 
   theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio=1,
          panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-  scale_y_continuous(name = "SSNVs/Mb at ECA", sec.axis = sec_axis(~. *3.3*10^3*2/7/estimated.mutation.rate.per.day[2]+ 2, name="Estimated weeks p.c."))
+  scale_y_continuous(name = "SSNVs/Mb at ECA")
 
 wilcox.test(to.plot[to.plot$Time=="Primary" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Metastasis" & to.plot$ECA!= to.plot$MRCA,]$ECA)
 wilcox.test(to.plot[to.plot$Time=="Primary" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Relapse" & to.plot$ECA!= to.plot$MRCA,]$ECA)
@@ -833,7 +808,7 @@ ggplot(to.plot, aes(x=Time, y=MRCA, col=as.character(Ploidy)))+geom_quasirandom(
                     labels=c("Primary untreated", "Primary treated", "Metastasis"))+ 
   theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio=1,
          panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-  scale_y_continuous(name = "SSNVs/Mb at MRCA", sec.axis = sec_axis(~. *3.3*10^3*2/7/estimated.mutation.rate.per.day[2]+ 2, name="Estimated weeks p.c."))
+  scale_y_continuous(name = "SSNVs/Mb at MRCA")
 
 wilcox.test(to.plot[to.plot$Time=="Primary",]$MRCA, to.plot[to.plot$Time=="Metastasis",]$MRCA)
 wilcox.test(to.plot[to.plot$Time=="Primary",]$MRCA, to.plot[to.plot$Time=="Relapse",]$MRCA)
@@ -849,5 +824,299 @@ saveWorkbook(wb, file = paste0(panel.directory, "Source_data_Fig.2.xlsx"), overw
 saveWorkbook(wb.s, file = paste0(panel.directory, "Source_data_Fig.S2.xlsx"), overwrite=T)
 
 
+
+##############################################################################################################################################
+## Figure S3: density distributions for MRCA and ECA - validation data set
+
+## source data:
+wb.s <- createWorkbook()
+
+source(paste0(custom.script.directory, "Oncoprint_additional_samples.R"))
+
+## if ECA was not uniquely identified, take the earliest time point
+mutation.time.eca[names(earliest.mutation.time)] <- earliest.mutation.time
+mutation.time.eca.lower[names(earliest.mutation.time)] <- earliest.mutation.time.lower
+mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time.upper
+####
+
+colnames(sample.information.30x)[which(colnames(sample.information.30x)=="ECA")] <- "ECA.exists"
+sample.information.30x$ECA.exists <- as.logical(sample.information.30x$ECA.exists)
+sample.information.30x$Ploidy <- sample.information.30x$Rounded.ploidy
+
+max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.30x)[sample.information.30x$Location=="Primary"]], na.rm=T)
+
+sample.information.30x$Telomere.maintenance.mechanism <- factor(sample.information.30x$Telomere.maintenance.mechanism,
+                                                                levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+
+##### Primary tumors, with and without treatment, metastases
+## Plot different ploidies with ECA, merge di- and tetraploids
+
+p1 <- list()
+p1.subset.list <- list()
+
+for(ploidy in c("triploid", "di-tetraploid")){
+  
+  if(ploidy=="triploid"){
+    ploidy <- 3
+  }else{
+    ploidy <- c(2,4)
+  }
+  
+  subset=sample.information.30x[ sample.information.30x$Location %in% c("Primary", "Metastasis") &
+                                   sample.information.30x$ECA.exists==T &
+                                   sample.information.30x$Ploidy %in% ploidy,,drop=F]
+  
+  if(nrow(subset)==0){next}
+  
+  
+  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
+                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+  
+  subset$MRCAtime <- mutation.time.mrca[rownames(subset)]
+  subset <- subset[order(subset$MRCAtime),]
+  
+  
+  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[rownames(subset)]/3.3/10^3,
+                                      ECA=mutation.time.eca[rownames(subset)]/3.3/10^3,
+                                      MRCA.upper=mutation.time.mrca.upper[rownames(subset)]/3.3/10^3,
+                                      MRCA.lower=mutation.time.mrca.lower[rownames(subset)]/3.3/10^3,
+                                      ECA.upper=mutation.time.eca.upper[rownames(subset)]/3.3/10^3,
+                                      ECA.lower=mutation.time.eca.lower[rownames(subset)]/3.3/10^3))
+  
+  
+  
+  if(ploidy%in%c(2,4)){
+    panel="Di_tetraploid_ECA"
+  }else if(ploidy==3){
+    panel="Triploid_ECA"
+  }
+  
+  addWorksheet(wb.s, panel)
+  writeData(wb.s, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
+  
+  
+  
+  p1[[length(p1)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
+                               aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
+                                   ymin =  sapply(sort(MRCA), function(x){
+                                     sum(MRCA.upper <= x)
+                                   })/length(MRCA),
+                                   ymax= sapply(sort(MRCA), function(x){
+                                     sum(MRCA.lower <= x)
+                                   })/length(MRCA)
+                               )) +
+    stat_ecdf(col=unname(manual.colors["Late"])) +
+    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA)+
+    scale_x_continuous(name = "Mutations/Mb",
+                       limits=c(0, max.mutation.time.primary/3.3/10^3))+
+    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
+    ggtitle(paste("# Cases = ", nrow(subset))) + 
+    stat_ecdf(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
+              aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA))
+              ),
+              col=unname(manual.colors["Early"])) +
+    geom_stepribbon(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
+                    aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA)),
+                        ymin =  sapply(sort(ECA), function(x){
+                          sum(ECA.upper <= x)
+                        })/length(ECA),
+                        ymax= sapply(sort(ECA), function(x){
+                          sum(ECA.lower <= x)
+                        })/length(ECA)
+                    ),
+                    fill=unname(manual.colors["Early"]), alpha=0.5, col=NA) 
+  
+  
+  ## TMM, Clinical subtype & CNVs
+  to.plot. <- subset[,c("MRCAtime", "Telomere.maintenance.mechanism", "ManualScore", "Ploidy")]
+  to.plot.$xmin <-c(0, (to.plot.$MRCAtime/3.3/10^3)[-length(to.plot.$MRCAtime)])
+  to.plot.$xmax <- to.plot.$MRCAtime/3.3/10^3
+  to.plot.$ymin <- 0
+  to.plot.$ymax <- 0.23
+  
+  to.plot.[,c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")] <- t(matrix.early.late.30x[c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"),
+                                                                                                     rownames(to.plot.)])
+  
+  ## distinguish cases that are not dateable from cases that are statistically insigniicant from ECA
+  for(chr.change in c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")){
+    tmp <- not.dateable[not.dateable$Gain==chr.change,]
+    to.plot.[intersect(rownames(to.plot.), tmp$Sample),chr.change] <- "n.d."
+  }
+  
+  to.plot.[to.plot.=="early late"] <- "Early"
+  to.plot.[to.plot.=="early"] <- "Early"
+  to.plot.[to.plot.==" late"] <- "Late"
+  to.plot.[to.plot.=="early tetraploid"] <- "n.d."
+  to.plot.[to.plot.==" late tetraploid"] <- "n.d."
+  to.plot.$`1p`[to.plot.$`1p` %in% c("Early", "Late")] <- "n.d."
+  to.plot.$`11q`[to.plot.$`11q` %in% c("Early", "Late")] <- "n.d."
+  
+  ## equal sizes for boxes
+  to.plot.$xmax <- (1:nrow(to.plot.))/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  to.plot.$xmin <- ((1:nrow(to.plot.))-1)/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  
+  p1.subset.list[[length(p1.subset.list) + 1]] <- ggplot(data=to.plot.,
+                                                         aes(xmin=xmin, xmax=xmax,
+                                                             ymin=ymin, ymax=ymax,
+                                                             fill=as.character(Telomere.maintenance.mechanism))) +
+    geom_rect() +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.27, ymax=ymin+0.48, fill=ManualScore), inherit.aes = F) +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.5, ymax=ymin+0.73, fill=as.character(Ploidy)), inherit.aes = F) +
+    scale_fill_manual(values=c(telomere.colors, clinical.risk.colors, manual.colors, "Subclonal"="purple", "n.d."="grey",
+                               ploidy.cols)) +
+    scale_x_continuous(limits=c(0, max.mutation.time.primary/3.3/10^3)) +
+    theme(legend.position = "bottom") +
+    scale_y_continuous(breaks=seq(0.125, 3.125, 0.25),
+                       labels=c("TMM", "Stage", "Ploidy", rev(c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"))))
+  
+  for(chr.change in rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))){
+    
+    index <- which(rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))==chr.change)
+    to.plot.$ymin <- 0.75 + 0.25*(index - 1)+0.2
+    to.plot.$ymax <- 0.75 + 0.25*index-0.2
+    
+    p1.subset.list[[length(p1.subset.list)]] <- p1.subset.list[[length(p1.subset.list)]] +
+      geom_rect(data=to.plot., aes_string(xmin="xmin", xmax="xmax", ymin="ymin", ymax="ymax", fill=chr.change), inherit.aes=T)
+  }
+  
+  
+  
+}
+
+
+## Plot the cases without ECA separately per ploidy; merge di- and tetraploids
+p2 <- list()
+p2.subset.list <- list()
+
+for(ploidy in c("triploid", "di-tetraploid")){
+  
+  if(ploidy=="triploid"){
+    ploidy <- 3
+  }else{
+    ploidy <- c(2,4)
+  }
+  
+  subset=sample.information.30x[ sample.information.30x$Location %in% c("Primary", "Metastasis") &
+                                   sample.information.30x$ECA.exists==F &
+                                   sample.information.30x$Ploidy %in% ploidy,,drop=F]
+  
+  if(nrow(subset)==0){next}
+  
+  
+  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
+                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+  
+  subset$MRCAtime <- mutation.time.mrca[rownames(subset)]
+  subset <- subset[order(subset$MRCAtime),]
+  
+  
+  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[rownames(subset)]/3.3/10^3,
+                                      ECA=mutation.time.eca[rownames(subset)]/3.3/10^3,
+                                      MRCA.upper=mutation.time.mrca.upper[rownames(subset)]/3.3/10^3,
+                                      MRCA.lower=mutation.time.mrca.lower[rownames(subset)]/3.3/10^3,
+                                      ECA.upper=mutation.time.eca.upper[rownames(subset)]/3.3/10^3,
+                                      ECA.lower=mutation.time.eca.lower[rownames(subset)]/3.3/10^3))
+  
+  
+  
+  if(ploidy%in%c(2,4)){
+    panel="Di_tetraploid_no_ECA"
+  }else if(ploidy==3){
+    panel="Triploid_no_ECA"
+  }
+  
+  addWorksheet(wb.s, panel)
+  writeData(wb.s, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
+  
+  
+  
+  p2[[length(p2)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
+                               aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
+                                   ymin =  sapply(sort(MRCA), function(x){
+                                     sum(MRCA.upper <= x)
+                                   })/length(MRCA),
+                                   ymax= sapply(sort(MRCA), function(x){
+                                     sum(MRCA.lower <= x)
+                                   })/length(MRCA)
+                               )) +
+    stat_ecdf(col=unname(manual.colors["Late"])) +
+    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA)+
+    scale_x_continuous(name = "Mutations/Mb",
+                       limits=c(0, max.mutation.time.primary/3.3/10^3))+
+    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
+    ggtitle(paste("# Cases = ", nrow(subset)))
+  
+  ## TMM, Clinical subtype & CNVs
+  to.plot. <- subset[,c("MRCAtime", "Telomere.maintenance.mechanism", "ManualScore", "Ploidy")]
+  to.plot.$xmin <-c(0, (to.plot.$MRCAtime/3.3/10^3)[-length(to.plot.$MRCAtime)])
+  to.plot.$xmax <- to.plot.$MRCAtime/3.3/10^3
+  to.plot.$ymin <- 0
+  to.plot.$ymax <- 0.23
+  
+  to.plot.[,c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")] <- t(matrix.early.late.30x[c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"),
+                                                                                                     rownames(to.plot.)])
+  
+  ## distinguish cases that are not dateable from cases that are statistically insigniicant from ECA
+  for(chr.change in c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2")){
+    tmp <- not.dateable[not.dateable$Gain==chr.change,]
+    to.plot.[intersect(rownames(to.plot.), tmp$Sample),chr.change] <- "n.d."
+  }
+  
+  to.plot.[to.plot.=="early late"] <- "Early"
+  to.plot.[to.plot.=="early"] <- "Early"
+  to.plot.[to.plot.==" late"] <- "Late"
+  to.plot.[to.plot.=="early tetraploid"] <- "n.d."
+  to.plot.[to.plot.==" late tetraploid"] <- "n.d."
+  to.plot.$`1p`[to.plot.$`1p` %in% c("Early", "Late")] <- "n.d."
+  to.plot.$`11q`[to.plot.$`11q` %in% c("Early", "Late")] <- "n.d."
+  
+  ## equal sizes for boxes
+  to.plot.$xmax <- (1:nrow(to.plot.))/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  to.plot.$xmin <- ((1:nrow(to.plot.))-1)/nrow(to.plot.)*max.mutation.time.primary/3.3/10^3
+  
+  p2.subset.list[[length(p2.subset.list) + 1]] <- ggplot(data=to.plot.,
+                                                         aes(xmin=xmin, xmax=xmax,
+                                                             ymin=ymin, ymax=ymax,
+                                                             fill=as.character(Telomere.maintenance.mechanism))) +
+    geom_rect() +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.27, ymax=ymin+0.48, fill=ManualScore), inherit.aes = F) +
+    geom_rect(data=to.plot., aes(xmin= xmin, xmax=xmax, ymin=ymin+0.5, ymax=ymin+0.73, fill=as.character(Ploidy)), inherit.aes = F) +
+    scale_fill_manual(values=c(telomere.colors, clinical.risk.colors, manual.colors, "Subclonal"="purple", "n.d."="grey",
+                               ploidy.cols)) +
+    scale_x_continuous(limits=c(0, max.mutation.time.primary/3.3/10^3)) +
+    theme(legend.position = "bottom") +
+    scale_y_continuous(breaks=seq(0.125, 3.125, 0.25),
+                       labels=c("TMM", "Stage", "Ploidy", rev(c("17q", "1p", "1q", "7q", "2p", "11q", "17", "1", "7", "2"))))
+  
+  for(chr.change in rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))){
+    
+    index <- which(rev(c("`17q`", "`1p`", "`1q`", "`7q`", "`2p`", "`11q`", "`17`", "`1`", "`7`", "`2`"))==chr.change)
+    to.plot.$ymin <- 0.75 + 0.25*(index - 1)+0.2
+    to.plot.$ymax <- 0.75 + 0.25*index-0.2
+    
+    p2.subset.list[[length(p2.subset.list)]] <- p2.subset.list[[length(p2.subset.list)]] +
+      geom_rect(data=to.plot., aes_string(xmin="xmin", xmax="xmax", ymin="ymin", ymax="ymax", fill=chr.change), inherit.aes=T)
+  }
+  
+  
+  
+}
+
+
+pdf(paste0(panel.directory, "Figure_S3.pdf"), width=9, height=9, useDingbats = F)
+
+figure <- ggarrange(plotlist=c(p1, p2), nrow=3, ncol=3)
+annotate_figure(figure, top="Primary tumor / Metastasis")
+
+figure <- ggarrange(plotlist=c(p1.subset.list, p2.subset.list), nrow=3, ncol=3)
+annotate_figure(figure, top="Primary tumor / Metastasis")
+
+dev.off()
+
+
+##############################################################################################################################################
+saveWorkbook(wb.s, file = paste0(panel.directory,"Source_data_Fig.3.xlsx"), overwrite=T)
 
 

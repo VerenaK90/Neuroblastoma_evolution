@@ -62,7 +62,7 @@ pdf(paste0(panel.directory, "/Figure_1a.pdf"))
 ht_list <-  Heatmap(to.plot$Stage, name="Stage", col = stage.colors, width=unit(0.5, "cm"), 
                     split=to.plot[,c("Sample_pair", "ManualScore")], rect_gp = gpar(col="white", lwd=2)) +
   Heatmap(to.plot$Location, name="Sample", col = time.colors, width=unit(0.5, "cm"),  rect_gp = gpar(col="white", lwd=2)) +
-  Heatmap(as.numeric(to.plot$Age), name="Age", col = c(brewer.pal(3, "Blues"))[c(1,3)],
+  Heatmap(as.numeric(to.plot$Age), name="Age", col = c("lightgrey", "black"),
           heatmap_legend_param = list(labels=levels(to.plot$Age), at=c(1,2)), width=unit(0.5, "cm"), rect_gp = gpar(col="white", lwd=2)) +
   Heatmap(to.plot$Telomere.maintenance.mechanism, name="TMM", col = telomere.colors, width=unit(0.5, "cm"),  rect_gp = gpar(col="white", lwd=2)) 
 
@@ -100,6 +100,8 @@ writeData(wb.s, "a", to.plot)
 
 ggplot(to.plot, aes(x=ACEseq, y=DNAIndex*2)) + geom_point() + scale_y_continuous(limits=c(1,max(to.plot)*1.1)) +
   scale_x_continuous(limits=c(1, max(to.plot)*1.1)) + geom_abline(slope=1, intercept = 0, linetype=2)
+
+cor.test(to.plot$DNAIndex*2, to.plot$ACEseq )
 
 dev.off()
 

@@ -1,10 +1,12 @@
 ## Reproduce Fig. 5
 ##############################################################################################################################################
-### Learn the dynamics of tumor initiation
+### Learn the dynamics of tumor initiation and progression
 ##############################################################################################################################################
 ### Load libraries and settings
 
-source(paste0(custom.script.directory, "./Figure_6.R"))
+
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Settings.R")
+source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Figure_6.R")
 
 source(paste0(custom.script.directory, "Plotting_function_CI.R"))
 
@@ -22,19 +24,51 @@ if(!dir.exists(panel.directory)){
 
 ##### observed data
 ## re-run
-#source(paste0(custom.script.directory, "Input_data.NB.initiation.R"))
+#source(paste0(custom.script.directory, "Input_data.R"))
 ## or load
-load(paste0(rdata.directory, "Input_data.NB.initiation.RData"))
+load(paste0(rdata.directory, "Input_data.RData"))
 
 mySumStatData <- list(NB_origin=NB_origin, NB_origin.upper=NB_origin.upper, NB_origin.lower=NB_origin.lower,
                       NB_origin.mrca.lr = NB_origin.mrca.lr, NB_origin.mrca.lr.lower = NB_origin.mrca.lr.lower, NB_origin.mrca.lr.upper = NB_origin.mrca.lr.upper,
                       NB_origin.eca = NB_origin.eca, NB_origin.eca.upper = NB_origin.eca.upper, NB_origin.eca.lower = NB_origin.eca.lower)
 
+load(paste0(rdata.directory, "MRCA_timing.RData"))
+load(paste0(rdata.directory,"Clonal_mutations_different_ploidies.RData"))
+load(paste0(rdata.directory,"Vafs_all_tumors.RData"))
+
+##### take the mutation rate from the fit of tumor initiation
+fits <- read.csv(paste0(output.directory, "Figure5/Expansion_decay_continuous_evol.csv"))
+mutation.rate <- c(mean(fits$par_mu*2), sd(fits$par_mu*2))
+
+source(paste0(custom.script.directory, "Compute_evolutionary_parameters_from_growth_model.R"))
+
+
 ##############################################################################################################################################
-### The fit was done with pyABC. In order to reproduce it, you need to create the input data by running Input_data.NB.initiation
+### The fit was done with pyABC. In order to reproduce it, you need to create the input data by running Input_data.R
 ### Then run Expansion_decay_continuous_evol.py. You need the files Expansion_decay_continuous_evol.R and
 ### Expansion_decay_2_hits_continuous_evol.R
 ### In analogy for homeostatic fits
+
+##########################################################################################################################################
+## Figure 5a: Illustrate comparability of ECA and early MRCA 
+# 
+# source(paste0(custom.script.directory, "Survival_analysis.R"))
+# 
+# 
+# pdf(paste0(panel.directory,"Figure_5a.pdf"), useDingbats = F)
+# 
+# addWorksheet(wb, "a")
+# writeData(wb, "a", joined.categorized.by.MRCA[,c("MRCA", "ECA", "MRCA.time")])
+# 
+# joined.categorized.by.MRCA$MRCA.time <- factor(joined.categorized.by.MRCA$MRCA.time, levels=c("low", "high"))
+# 
+# ggplot(joined.categorized.by.MRCA, aes(x=paste("MRCA", MRCA.time), y=MRCA)) + geom_boxplot(col=manual.colors["Late"], fill=manual.colors["Late"], alpha=0.5) + 
+#   geom_beeswarm(col=manual.colors["Late"]) + 
+#   geom_boxplot(aes(x="ECA", y=ECA),col=manual.colors["Early"],  fill=manual.colors["Early"], alpha=0.5,inherit.aes = F) +
+#   geom_beeswarm(aes(x="ECA", y=ECA),col=manual.colors["Early"]) + scale_x_discrete(name="", limits=c("ECA", "MRCA low", "MRCA high")) + 
+#   scale_y_continuous(name="#SSNVs/Mb") 
+# 
+# dev.off()
 
 
 ##############################################################################################################################################
@@ -97,12 +131,11 @@ dev.off()
 
 
 ##############################################################################################################################################
-## Figure 5a Expansion + decay, MRCA
+## Figure 5b Expansion + decay, MRCA
 
 
 addWorksheet(wb, "b")
 writeData(wb, "b", to.plot)
-
 
 pdf(paste0(panel.directory, "Figure_5b.pdf"), width=5, height=3)
 print(ggplot(to.plot, aes(x=x/(3.3*10^9)*10^6, y = data, ymin = data-sd, ymax = data +sd, col=Event, fill=Event)) + geom_step() + geom_errorbar()+
@@ -122,11 +155,10 @@ print(ggplot(to.plot, aes(x=x/(3.3*10^9)*10^6, y = data, ymin = data-sd, ymax = 
 dev.off()
 
 
-
 ##############################################################################################################################################
-## Figure S4b; parameter estimates
+## Figure S5b; parameter estimates
 
-pdf(paste0(panel.directory, "Figure_S4b.pdf"), width=7, height=7, useDingbats = F)
+pdf(paste0(panel.directory, "Figure_S5b.pdf"), width=7, height=7, useDingbats = F)
 
 ## do all correlations
 ## compute selective advantage from survival probability
@@ -249,7 +281,7 @@ ggarrange(plotlist=p, nrow=10, ncol=10, align="hv")
 dev.off()
 
 ##############################################################################################################################################
-##### Figure 5c, S4d Plot the retraction of neuroblasts and the exapnsion of the first clone over approximate week of pregnancy
+##### Figure 5c, S5d Plot the retraction of neuroblasts and the exapnsion of the first clone over approximate week of pregnancy
 
 mutation.count <- seq(0, max(NB_origin))
 N.sim <- matrix(0, nrow=1000, ncol=length(mutation.count))
@@ -356,7 +388,7 @@ writeData(wb.s, "d_Neuroblasts", N.sim.cells)
 addWorksheet(wb.s, "d_M1_cells")
 writeData(wb.s, "d_M1_cells", M1)
 
-pdf(paste0(panel.directory, "Figure_S4d.pdf"), width=7, height=7, useDingbats = F)
+pdf(paste0(panel.directory, "Figure_S5d.pdf"), width=7, height=7, useDingbats = F)
 
 ggplot(M1, aes(x=t, ymin=`2.5%`, ymax=`97.5%`)) + geom_ribbon(fill="darkgreen") + 
   geom_ribbon(data=N.sim.cells, aes(x=t, ymin=ymin, ymax=ymax), fill="grey")+
@@ -374,7 +406,7 @@ dev.off()
 
 
 ##############################################################################################################################################
-## Figure S4c Expansion + homeostasis
+## Figure S5c Expansion + homeostasis
 
 fits <- read.csv(paste0(panel.directory, "Expansion_homeostasis_continuous_evol.csv"))
 
@@ -403,7 +435,7 @@ to.plot <- data.frame(x = NB_origin,
 addWorksheet(wb.s, "c")
 writeData(wb.s, "c", to.plot)
 
-pdf(paste0(panel.directory, "Figure_S4c.pdf"), width=5, height=3)
+pdf(paste0(panel.directory, "Figure_S5c.pdf"), width=5, height=3)
 print(ggplot(to.plot, aes(x=x/(3.3*10^9)*10^6, y = data, ymin = data-sd, ymax = data +sd, col=Event, fill=Event)) + geom_step() + geom_errorbar()+
         geom_stepribbon(aes(x=x/(3.3*10^9)*10^6, ymin = lower, ymax = upper), alpha=0.5, col=NA)  +
         scale_fill_manual(values=manual.colors) + scale_color_manual(values=manual.colors) + 
@@ -416,7 +448,101 @@ dev.off()
 
 
 ##############################################################################################################################################
+## Figure 5d: effective mutation rate
+
+
+to.plot <- data.frame(Age=subset$Age/365, mu.eff.mean = effective.mutation.rates[1,],
+                      Division.rate=division.rate[1,],
+                      Subtype=subset$Telomere.maintenance.mechanism,
+                      Effective.division.rate=(1-deltas[1,]),
+                      Location=subset$Location)
+
+to.plot <- to.plot[!to.plot$Location %in% c("Relapse tumor", "Relapse metastasis"),] 
+
+to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT"),]
+to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT"))
+
+addWorksheet(wb, "d")
+writeData(wb, "d", to.plot) 
+
+pdf(paste0(panel.directory, "Figure_5d.pdf"), width = 5, height=4)
+
+p <- ggplot(to.plot, aes(x=Subtype, y=mu.eff.mean)) + 
+  geom_boxplot()+ 
+  scale_fill_manual(values=time.colors) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
+        panel.background = element_blank(), axis.line = element_line(colour = "black")) +
+  scale_x_discrete(name = "") + scale_y_log10()
+
+print(p)
+
+
+dev.off()
+
+##############################################################################################################################################
+## Figure 5e: relative loss rates
+
+pdf(paste0(panel.directory, "Figure_5e.pdf"), width = 5, height=4, useDingbats = F)
+
+## to summarize the data appropriately, I compute for each subclass the standard error of the mean
+
+to.plot <- data.frame(delta.mean = sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
+  mean(deltas[1,subset$Telomere.maintenance.mechanism==x & subset$Location %in% c("Primary", "Metastasis")])}), 
+  delta.sd =sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
+    sqrt(sum((deltas[2,subset$Telomere.maintenance.mechanism==x& subset$Location %in% c("Primary", "Metastasis")])^2))/sum(subset$Telomere.maintenance.mechanism==x& subset$Location %in% c("Primary", "Metastasis"))}),
+  Subtype=unique(subset$Telomere.maintenance.mechanism))
+
+to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT"),]
+
+to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT"))
+
+addWorksheet(wb, "e")
+writeData(wb, "e", to.plot) 
+
+
+p <- ggplot(to.plot, aes(x=Subtype, y=delta.mean, ymin=delta.mean - delta.sd, ymax=delta.mean+delta.sd)) + 
+  geom_pointrange()+ scale_y_continuous(limits=c(0,1)) + 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+print(p)
+dev.off()
+
+
+##############################################################################################################################################
+## Figure 5f: division rate
+
+pdf(paste0(panel.directory, "Figure_5f.pdf"), width = 5, height=4, useDingbats = F)
+
+## to summarize the data appropriately, I compute for each subclass the standard error of the mean
+
+
+to.plot <- data.frame(division.rate.mean = sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
+  mean(division.rate[1,subset$Telomere.maintenance.mechanism==x & subset$Location %in% c("Primary", "Metastasis")])}), 
+  division.rate.sd =sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
+    sqrt(sum((division.rate[2,subset$Telomere.maintenance.mechanism==x & subset$Location %in% c("Primary", "Metastasis")])^2))/sum(subset$Telomere.maintenance.mechanism==x & subset$Location %in% c("Primary", "Metastasis"))}),
+  Telomere.maintenance.mechanism=unique(subset$Telomere.maintenance.mechanism))
+
+to.plot <- to.plot[to.plot$Telomere.maintenance.mechanism %in% c("MNA", "TERT", "ALT"),]
+
+to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism, levels=c("MNA", "TERT", "ALT"))
+
+addWorksheet(wb, "f")
+writeData(wb, "f", to.plot) 
+
+p <- ggplot(to.plot, aes(x=Telomere.maintenance.mechanism, y=division.rate.mean, ymin=division.rate.mean - division.rate.sd,
+                         ymax=division.rate.mean+division.rate.sd)) + 
+  geom_pointrange()+ scale_y_continuous(limits=c(0, 1.1*max(to.plot$division.rate.mean + to.plot$division.rate.sd)))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+print(p)
+
+dev.off()
+
+
+##############################################################################################################################################
 
 saveWorkbook(wb, file = paste0(panel.directory, "Source_data_Fig.5.xlsx"), overwrite=T)
 
-saveWorkbook(wb.s, file = paste0(panel.directory, "Source_data_Fig.S4.xlsx"), overwrite=T)
+saveWorkbook(wb.s, file = paste0(panel.directory, "Source_data_Fig.S5.xlsx"), overwrite=T)
