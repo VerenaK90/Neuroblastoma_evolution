@@ -14,8 +14,8 @@ Extract.info.from.vcf <- function(vcf, info="readcounts", type="snvs", mutationc
     if(type=="snvs"){
       if(info=="readcounts"){
         readcounts <- t(sapply(vcf$vcf$INFO, function(x){
-          x <- strsplit(x, split=";")[[1]][6]
-          x <- strsplit(x, split="=")[[1]][2]
+          x <- strsplit(x, split="DP4=")[[1]][2]
+          x <- strsplit(x, split=";")[[1]][1]
           x <- as.numeric(strsplit(x, split=",")[[1]])
           x <- unname(x)
           c(sum(x[c(1,2)]), sum(x[c(3,4)]))
@@ -27,8 +27,8 @@ Extract.info.from.vcf <- function(vcf, info="readcounts", type="snvs", mutationc
       }
       if(info=="depth"){
         depth <- sapply(vcf$vcf$INFO, function(x){
-          x <- strsplit(x, split=";")[[1]][6]
-          x <- strsplit(x, split="=")[[1]][2]
+          x <- strsplit(x, split="DP4=")[[1]][2]
+          x <- strsplit(x, split=";")[[1]][1]
           x <- as.numeric(strsplit(x, split=",")[[1]])
           x <- unname(x)
           sum(x)
@@ -38,8 +38,8 @@ Extract.info.from.vcf <- function(vcf, info="readcounts", type="snvs", mutationc
       }
       if(info=="VAF"){
         vaf <- t(sapply(vcf$vcf$INFO, function(x){
-          x <- strsplit(x, split=";")[[1]][6]
-          x <- strsplit(x, split="=")[[1]][2]
+          x <- strsplit(x, split="DP4=")[[1]][2]
+          x <- strsplit(x, split=";")[[1]][1]
           x <- as.numeric(strsplit(x, split=",")[[1]])
           x <- unname(x)
           c(sum(x[c(3,4)])/ sum(x))
