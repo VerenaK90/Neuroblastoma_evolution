@@ -25,7 +25,7 @@ if(!dir.exists(panel.directory)){
 
 to.plot <- sample.information.80x[,c("Telomere.maintenance.mechanism", "Location", "Age", "ManualScore", "Stage")]
 to.plot$Patient_ID <- rownames(to.plot)
-## manipulate data slightly:
+## manipulate data slightly (binary age and replace stage 5 with 4S):
 to.plot$Age.binary <- "<18 months"
 to.plot$Age.binary[to.plot$Age >= 18*30]  <- ">=18 months"
 to.plot$Age <- to.plot$Age.binary
@@ -42,8 +42,8 @@ to.plot$Location[to.plot$Location %in% c("Primary", "Metastasis")] <- "Primary"
 to.plot$Location <- factor(to.plot$Location, levels=c("Primary", "Relapse"))
 to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism, levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
 to.plot$Sample_pair <- "No pair"
-to.plot$Sample_pair[to.plot$Patient_ID %in% c("NBE51", "NBE78")] <- "NBE51/NBE78"
-to.plot$Sample_pair[to.plot$Patient_ID %in% c("NBE51", "NBE66")] <- "NBE11/NBE66"
+to.plot$Sample_pair[to.plot$Tumor_ID %in% c("NBE51", "NBE78")] <- "NBE51/NBE78"
+to.plot$Sample_pair[to.plot$Tumor_ID %in% c("NBE51", "NBE66")] <- "NBE11/NBE66"
 to.plot$Sample_pair <- factor(to.plot$Sample_pair)
 
 
@@ -71,6 +71,21 @@ draw(ht_list, ht_gap=unit(0, "cm"))
 
 dev.off()
 
+## summary statistics:
+
+## Sample type:
+table(sample.information.80x$Location)
+
+## 7 Metastasis, 60 Primary, 23 Relapse tumors, 10 Relapse metastasis
+
+## Age at diagnosis:
+median(sample.information.80x$Age[sample.information.80x$Stage %in% c(1, 2, 5)])/365
+## 0.7y
+median(sample.information.80x$Age[sample.information.80x$Stage ==3])/365
+## 3.5y
+median(sample.information.80x$Age[sample.information.80x$Stage ==4])/365
+## 3.9y
+
 ##############################################################################################################################################
 ## Figure 1b: Purity/Ploidy overview
 
@@ -84,32 +99,64 @@ ggplot(sample.information.80x, aes(x=Ploidy, y=Purity, group=Ploidy)) + geom_bee
 
 dev.off()
 
+median(sample.information.80x$Purity)
+## 0.88
 
 ##############################################################################################################################################
-## Figure S1a: Ploidy vs. DNA-index*2
+## Figure S1a: age distribution
 
-pdf(paste0(panel.directory, "/Figure_S1a.pdf"), useDingbats = F, width=4, height=4)
+pdf(paste0(panel.directory, "Figure_S1a.pdf"), width = 5, height=4, useDingbats = F)
+
+to.plot <- sample.information.80x[sample.information.80x$Location %in% c("Primary", "Metastasis"), c("Age", "Stage", "Telomere.maintenance.mechanism")] 
+to.plot$Stage[to.plot$Stage=="5"] <- "4S"
+
+addWorksheet(wb.s, "a")
+writeData(wb.s, "a", to.plot) 
+
+p <- ggplot(to.plot, aes(x=Age/365, col=Telomere.maintenance.mechanism)) + 
+  stat_ecdf(size=2)+scale_color_manual(values=telomere.colors) + scale_y_continuous(name="Cumulative incidence") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+print(p)
+
+
+p <- ggplot(to.plot, aes(x=Age/365, col=Stage)) + 
+  stat_ecdf(size=2)+scale_color_manual(values=stage.colors) + scale_y_continuous(name="Cumulative incidence") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+print(p)
+
+dev.off()
+
+
+##############################################################################################################################################
+## Figure S1b: Ploidy vs. DNA-index*2
+
+pdf(paste0(panel.directory, "/Figure_S1b.pdf"), useDingbats = F, width=4, height=4)
 
 load(paste0(rdata.directory, "Clonal_mutations_different_ploidies.RData"))
 
 to.plot <- data.frame(DNAIndex = as.numeric(sample.information.80x[tumors.80x,]$`DNA-INDEX`),
                       ACEseq = ploidy[tumors.80x])
 
-addWorksheet(wb.s, "a")
-writeData(wb.s, "a", to.plot)
+addWorksheet(wb.s, "b")
+writeData(wb.s, "b", to.plot)
 
 ggplot(to.plot, aes(x=ACEseq, y=DNAIndex*2)) + geom_point() + scale_y_continuous(limits=c(1,max(to.plot)*1.1)) +
   scale_x_continuous(limits=c(1, max(to.plot)*1.1)) + geom_abline(slope=1, intercept = 0, linetype=2)
 
 cor.test(to.plot$DNAIndex*2, to.plot$ACEseq )
+## 0.67
 
 dev.off()
 
 
 ##############################################################################################################################################
-## Figure S1b: Plot association between ploidy and stage
+## Figure S1a: Plot association between ploidy and stage
 
-pdf(paste0(panel.directory, "Figure_S1b.pdf"))
+pdf(paste0(panel.directory, "Figure_S1a.pdf"))
 
 to.plot <- data.frame(Stage = sample.information.80x[tumors.80x,]$Stage,
                       Ploidy = sample.information.80x$Ploidy )
@@ -117,8 +164,8 @@ to.plot$Ploidy <- factor(to.plot$Ploidy, levels = c("2", "3", "4"))
 to.plot$Stage <-  replace(to.plot$Stage, to.plot$Stage=="5", "4S")
 to.plot$Stage <- factor(to.plot$Stage, levels = c("1", "4S", "2", "3", "4"))
 
-addWorksheet(wb.s, "b")
-writeData(wb.s, "b", to.plot)
+addWorksheet(wb.s, "a")
+writeData(wb.s, "a", to.plot)
 
 
 to.plot <- to.plot %>% 
@@ -132,8 +179,12 @@ ggplot(data = to.plot,
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=12),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
+
 dev.off()
 
+
+table(sample.information.80x$Ploidy)
+## 2: 55, 3: 33, 4: 12
 
 
 ##############################################################################################################################################
@@ -164,18 +215,21 @@ ggplot(to.plot, aes(x=CNVType, y = Counts, fill = Clonality))+ geom_bar(stat="su
 
 dev.off()
 
-##############################################################################################################################################
-## Figure S1c: Gains and losses across the cohort
+table(sample.information.80x$Ploidy)
+## 2: 55, 3: 33, 4: 12
 
-pdf(paste0(panel.directory, "Figure_S1c.pdf"))
+##############################################################################################################################################
+## Figure S1d: Gains and losses across the cohort
+
+pdf(paste0(panel.directory, "Figure_S1d.pdf"))
 
 to.store <- rbind(data.frame(Chrom=seqnames(gain.granges), Start = start(gain.granges), End = end(gain.granges),
                        Number.of.cases = gain.granges$Coverage, Type = gain.granges$Type),
                   data.frame(Chrom=seqnames(loss.granges), Start = start(loss.granges), End = end(loss.granges),
                              Number.of.cases = loss.granges$Coverage, Type = loss.granges$Type))
 
-addWorksheet(wb.s, "c")
-writeData(wb.s, "c", to.plot) 
+addWorksheet(wb.s, "d")
+writeData(wb.s, "d", to.store) 
 
 plotGrandLinear(c(gain.granges, loss.granges), coord="genome", geom="bar", 
                 ymax=c(gain.granges, loss.granges)$Coverage/length(tumors.80x)*100, aes(y=Coverage/length(tumors.80x)*100,
@@ -311,8 +365,8 @@ pdf(paste0(panel.directory, "Figure_1_e_f_g.pdf"), width=5, height = 3, useDingb
 
 ## all mutations
 to.plot <- data.frame(Signatures = tmp$ALL[apply(tmp, 1, max)>0.05],
-                      Upper = tmp$ALL.min[apply(tmp, 1, max)>0.05],
-                      Lower = tmp$ALL.max[apply(tmp, 1, max)>0.05])
+                      Lower = tmp$ALL.min[apply(tmp, 1, max)>0.05],
+                      Upper = tmp$ALL.max[apply(tmp, 1, max)>0.05])
 
 ggplot(data = to.plot,
        aes(x = factor(rownames(signature.contribution.c)[apply(tmp, 1, max)>0.05], levels = rownames(signature.contribution.c)[apply(tmp, 1, max)>0.05]), y = Signatures, ymin = Lower, ymax = Upper)) + 
@@ -326,8 +380,8 @@ writeData(wb, "e", to.plot)
 
 ## subclonal mutations
 to.plot <- data.frame(Signatures = tmp$SC[apply(tmp, 1, max)>0.05],
-                      Upper = tmp$SC.min[apply(tmp, 1, max)>0.05],
-                      Lower = tmp$SC.max[apply(tmp, 1, max)>0.05])
+                      Lower = tmp$SC.min[apply(tmp, 1, max)>0.05],
+                      Upper = tmp$SC.max[apply(tmp, 1, max)>0.05])
 
 ggplot(data = to.plot,
        aes(x = factor(rownames(signature.contribution.c)[apply(tmp, 1, max)>0.05], levels = rownames(signature.contribution.sc)[apply(tmp, 1, max)>0.05]), y = Signatures, ymin = Lower, ymax = Upper)) + 
@@ -341,8 +395,8 @@ writeData(wb, "f", to.plot)
 
 ## clonal mutations
 to.plot <- data.frame(Signatures = tmp$C[apply(tmp, 1, max)>0.05],
-                      Upper = tmp$C.min[apply(tmp, 1, max)>0.05],
-                      Lower = tmp$C.max[apply(tmp, 1, max)>0.05])
+                      Lower = tmp$C.min[apply(tmp, 1, max)>0.05],
+                      Upper = tmp$C.max[apply(tmp, 1, max)>0.05])
 
 ggplot(data = to.plot,
        aes(x = factor(rownames(signature.contribution.c)[apply(tmp, 1, max)>0.05], levels = rownames(signature.contribution.c)[apply(tmp, 1, max)>0.05]), y = Signatures, ymin = Lower, ymax = Upper)) + 
@@ -356,6 +410,6 @@ writeData(wb, "g", to.plot)
 
 dev.off()
 
-
+##############################################################################################################################################
 saveWorkbook(wb, file = paste0(panel.directory, "Source_data_Fig.1.xlsx"), overwrite=T)
 saveWorkbook(wb.s, file = paste0(panel.directory, "Source_data_Fig.S1.xlsx"), overwrite=T)
