@@ -48,251 +48,14 @@ ggplot(to.plot[to.plot$Ploidy==4,], aes(x=VAF)) + geom_histogram(binwidth=0.01) 
 dev.off()
 
 
-##############################################################################################################################################
-## Figure 2d-f and Fig. S2c,d,e: density plots per genomic segment for NBE15, NBE14, NBE44, NBE99
-
-
-## manually set the range 
-max.mutation.time <- 0.7
-
-## workbook for source data
-
-for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
-  if(length( mutation.time.most.likely[[i]])==0){next}
-  
-  binwidth = (max(mutation.time.most.likely[[i]]/3.3/10^3) - min(mutation.time.most.likely[[i]]/3.3/10^3))/20
-  
-  to.plot <- data.frame(x= mutation.time.most.likely[[i]]/3.3/10^3,
-                        xupper= mutation.time.upper[[i]]/3.3/10^3,
-                        xlower=mutation.time.lower[[i]]/3.3/10^3,
-                        Segment = names(mutation.time.most.likely[[i]]),
-                        Timing = sapply(names(mutation.time.most.likely[[i]]), function(x){
-                          x <- strsplit(x, split="_")[[1]]
-                          if(is.na(x[4])){
-                            return("Post-CNV")
-                          }
-                          if(x[4]=="I"){
-                            return("Post-CNV")
-                          }else{
-                            return("Pre-CNV")
-                          }
-                        }))
-  
-  to.plot$Segment <- factor(to.plot$Segment, levels=unique(to.plot$Segment))
-  ## for the three examples shown in the manuscript, export the source data
-  if(i %in% c("NBE15", "NBE14", "NBE44", "NBE99")){
-    
-    if(i=="NBE15"){
-      panel="d_e_f"
-      addWorksheet(wb, panel)
-      writeData(wb, panel, to.plot)
-    }else if(i=="NBE14"){
-      panel="d"
-      addWorksheet(wb.s, panel)
-      writeData(wb.s, panel, to.plot)
-    }else if(i=="NBE99"){
-      panel="c"
-      addWorksheet(wb.s, panel)
-      writeData(wb.s, panel, to.plot)
-    }else{
-      panel="e"
-      addWorksheet(wb.s, panel)
-      writeData(wb.s, panel, to.plot)
-    }
-    
-
-    
-  }
-  
- 
-  if(i == "NBE15"){
-    pdf(paste0(panel.directory, "Figure_2d_e_f.pdf"))
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=x)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
-      scale_y_continuous(name="# Genomic segments") + 
-       scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$x)), max.mutation.time)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=x, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
-      # scale_fill_manual(values=brewer.pal(9, "PRGn")[c(9)])+
-      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
-      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=x), inherit.aes = F) +
-      scale_y_continuous(name="# Genomic segments") + 
-        scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$x)*1.1)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
-    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
-    
-    p <- ggplot(to.plot., aes(x=x, xmin=xlower, xmax=xupper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
-      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
-      geom_point() + geom_errorbarh(height=0)+ 
-      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
-                 linetype=2) + 
-      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
-                                  xmax=rep(mutation.time.mrca.upper[i],2),
-                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
-                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
-                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
-      geom_vline(data=data.frame(x=mutation.time.eca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Early"],
-                 linetype=2) + 
-      geom_ribbon(data=data.frame(xmin=rep(mutation.time.eca.lower[i], 2),
-                                  xmax=rep(mutation.time.eca.upper[i],2),
-                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
-                  aes( xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3, y=y),
-                  height=0, inherit.aes = F, fill=manual.colors["Early"], col=NA, alpha=0.5) +
-      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$xupper)*1.1)) +
-      scale_y_continuous(limits=c(0, nrow(to.plot)))
-    
-    print(p)
-
-    dev.off()
-    
-  }
-  
-  if(i == "NBE14"){
-    pdf(paste0(panel.directory, "Figure_S2d.pdf"))
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=x)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
-      scale_y_continuous(name="# Genomic segments") + 
-        scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$x)), max.mutation.time)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=x, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
-      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
-      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=x), inherit.aes = F) +
-      scale_y_continuous(name="# Genomic segments") + 
-        scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$x)*1.1)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
-    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
-    
-    p <- ggplot(to.plot., aes(x=x, xmin=xlower, xmax=xupper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
-      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
-      geom_point() + geom_errorbarh(height=0)+ 
-      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
-                 linetype=2) + 
-      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
-                                  xmax=rep(mutation.time.mrca.upper[i],2),
-                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
-                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
-                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
-      geom_vline(data=data.frame(x=mutation.time.eca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Early"],
-                 linetype=2) + 
-      geom_ribbon(data=data.frame(xmin=rep(mutation.time.eca.lower[i], 2),
-                                  xmax=rep(mutation.time.eca.upper[i],2),
-                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
-                  aes( xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3, y=y),
-                  height=0, inherit.aes = F, fill=manual.colors["Early"], col=NA, alpha=0.5) +
-      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$xupper)*1.1)) +
-      scale_y_continuous(limits=c(0, nrow(to.plot)))
-    
-    print(p)
-
-    dev.off()
-  }
-  
-  if(i == "NBE44"){
-    pdf(paste0(panel.directory, "Figure_S2e.pdf"))
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=x)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
-      scale_y_continuous(name="# Genomic segments") + 
-       scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$x)), max.mutation.time)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=x, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
-      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
-      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=x), inherit.aes = F) +
-      scale_y_continuous(name="# Genomic segments") + 
-        scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$x)*1.1)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
-    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
-    
-    p <- ggplot(to.plot., aes(x=x, xmin=xlower, xmax=xupper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
-      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
-      geom_point() + geom_errorbarh(height=0)+ 
-      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
-                 linetype=2) + 
-      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
-                                  xmax=rep(mutation.time.mrca.upper[i],2),
-                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
-                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
-                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
-           scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$xupper)*1.1)) +
-      scale_y_continuous(limits=c(0, nrow(to.plot)))
-    
-    print(p)   
-    
-    dev.off()
-  }
-  
-  if(i == "NBE99"){
-    pdf(paste0(panel.directory, "Figure_S2c.pdf"))
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=x)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
-      scale_y_continuous(name="# Genomic segments") + 
-         scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$x)), max.mutation.time)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=x, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
-      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
-      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=x), inherit.aes = F) +
-      scale_y_continuous(name="# Genomic segments") + 
-      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$x)*1.1)) +
-      ggtitle(i)
-    
-    print(p)
-    
-    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
-    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
-    
-    p <- ggplot(to.plot., aes(x=x, xmin=xlower, xmax=xupper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
-      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
-      geom_point() + geom_errorbarh(height=0)+ 
-      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
-                 linetype=2) + 
-      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
-                                  xmax=rep(mutation.time.mrca.upper[i],2),
-                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
-                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
-                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
-      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$xupper)*1.1)) +
-      scale_y_continuous(limits=c(0, nrow(to.plot)))
-    
-    print(p)    
-
-    dev.off()
-  }
-  
-}
-
-
-
 ##########################################################################################################################################
 #### Figure S2a: # Mutation densities per segment for tumor NBE15
 
 example.tumor <- "NBE15"
 
-to.plot <- data.frame(x= mutation.time.most.likely[[example.tumor]]/3.3/10^3,
-                      xupper= mutation.time.upper[[example.tumor]]/3.3/10^3,
-                      xlower=mutation.time.lower[[example.tumor]]/3.3/10^3,
+to.plot <- data.frame(Density= mutation.time.most.likely[[example.tumor]]/3.3/10^3,
+                      Density_upper= mutation.time.upper[[example.tumor]]/3.3/10^3,
+                      Density_lower=mutation.time.lower[[example.tumor]]/3.3/10^3,
                       Segment = names(mutation.time.most.likely[[example.tumor]]),
                       Timing = sapply(names(mutation.time.most.likely[[example.tumor]]), function(x){
                         x <- strsplit(x, split="_")[[1]]
@@ -323,19 +86,394 @@ writeData(wb.s, "a", to.plot.)
 
 pdf(paste0(panel.directory, "Figure_S2a.pdf"), width=3, height=3)
 
-p <- ggplot(to.plot., aes(x=CopyNumber, y=x, ymin=xlower, ymax=xupper)) + geom_boxplot() +
+p <- ggplot(to.plot., aes(x=CopyNumber, y=Density, ymin=Density_lower, ymax=Density_upper)) + geom_boxplot() +
   geom_beeswarm()+
-  #geom_pointrange(position = position_jitter(w = 0.1, h = 0)) + 
-  scale_y_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$x)), max(to.plot$xupper)*1.1)) +
+  scale_y_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density_upper)*1.1)) +
   geom_signif(comparisons=list(c("disomic", "trisomic"), c("disomic", "tetrasomic"), c("trisomic", "tetrasomic"))) +
-  ggtitle(sample.information.80x[i,]$Evolution_paper_Id) + scale_y_continuous(name="")
+  ggtitle(sample.information.80x[i,]$Tumor_ID) + scale_y_continuous(name="")
 
 print(p)
-#ggarrange(plotlist=p.mrca.densities.all.tumors, nrow=6, ncol=4)
 
 dev.off()
 
 
+##############################################################################################################################################
+## Figure 2d-f and Fig. S2c,d,e: density plots per genomic segment for NBE15, NBE14, NBE44, NBE99
+
+
+## manually set the range 
+max.mutation.time <- 0.7
+
+## workbook for source data
+
+for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
+  if(length( mutation.time.most.likely[[i]])==0){next}
+  
+  binwidth = (max(mutation.time.most.likely[[i]]/3.3/10^3) - min(mutation.time.most.likely[[i]]/3.3/10^3))/20
+  
+  to.plot <- data.frame(Density= mutation.time.most.likely[[i]]/3.3/10^3,
+                        Density_upper= mutation.time.upper[[i]]/3.3/10^3,
+                        Density_lower=mutation.time.lower[[i]]/3.3/10^3,
+                        Segment = names(mutation.time.most.likely[[i]]),
+                        Timing = sapply(names(mutation.time.most.likely[[i]]), function(x){
+                          x <- strsplit(x, split="_")[[1]]
+                          if(is.na(x[4])){
+                            return("Post-CNV")
+                          }
+                          if(x[4]=="I"){
+                            return("Post-CNV")
+                          }else{
+                            return("Pre-CNV")
+                          }
+                        }))
+  
+  to.plot$Segment <- factor(to.plot$Segment, levels=unique(to.plot$Segment))
+  ## for the three examples shown in the manuscript, export the source data
+  if(i %in% c("NBE15", "NBE14", "NBE44", "NBE99")){
+    
+    if(i=="NBE15"){
+      panel="d_e_f"
+      addWorksheet(wb, panel)
+      writeData(wb, panel, to.plot)
+    }else if(i=="NBE14"){
+      panel="f"
+      addWorksheet(wb.s, panel)
+      writeData(wb.s, panel, to.plot)
+    }else if(i=="NBE99"){
+      panel="d"
+      addWorksheet(wb.s, panel)
+      writeData(wb.s, panel, to.plot)
+    }else{
+      panel="g"
+      addWorksheet(wb.s, panel)
+      writeData(wb.s, panel, to.plot)
+    }
+    
+
+    
+  }
+  
+ 
+  if(i == "NBE15"){
+    pdf(paste0(panel.directory, "Figure_2d_e_f.pdf"))
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=Density)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$Density)), max.mutation.time)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=Density, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
+      # scale_fill_manual(values=brewer.pal(9, "PRGn")[c(9)])+
+      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
+      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=Density), inherit.aes = F) +
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density)*1.1)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
+    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
+    
+    p <- ggplot(to.plot., aes(x=Density, xmin=Density_lower, xmax=Density_upper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
+      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
+      geom_point() + geom_errorbarh(height=0)+ 
+      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
+                 linetype=2) + 
+      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
+                                  xmax=rep(mutation.time.mrca.upper[i],2),
+                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
+                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
+                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
+      geom_vline(data=data.frame(x=mutation.time.eca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Early"],
+                 linetype=2) + 
+      geom_ribbon(data=data.frame(xmin=rep(mutation.time.eca.lower[i], 2),
+                                  xmax=rep(mutation.time.eca.upper[i],2),
+                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
+                  aes( xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3, y=y),
+                  height=0, inherit.aes = F, fill=manual.colors["Early"], col=NA, alpha=0.5) +
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density_upper)*1.1)) +
+      scale_y_continuous(limits=c(0, nrow(to.plot)))
+    
+    print(p)
+    
+    dev.off()
+    
+  }
+  
+  if(i == "NBE14"){
+    pdf(paste0(panel.directory, "Figure_S2f.pdf"))
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=Density)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$Density)), max.mutation.time)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=Density, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
+      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
+      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=Density), inherit.aes = F) +
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density)*1.1)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
+    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
+    
+    p <- ggplot(to.plot., aes(x=Density, xmin=Density_lower, xmax=Density_upper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
+      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
+      geom_point() + geom_errorbarh(height=0)+ 
+      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
+                 linetype=2) + 
+      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
+                                  xmax=rep(mutation.time.mrca.upper[i],2),
+                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
+                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
+                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
+      geom_vline(data=data.frame(x=mutation.time.eca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Early"],
+                 linetype=2) + 
+      geom_ribbon(data=data.frame(xmin=rep(mutation.time.eca.lower[i], 2),
+                                  xmax=rep(mutation.time.eca.upper[i],2),
+                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
+                  aes( xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3, y=y),
+                  height=0, inherit.aes = F, fill=manual.colors["Early"], col=NA, alpha=0.5) +
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density_upper)*1.1)) +
+      scale_y_continuous(limits=c(0, nrow(to.plot)))
+    
+    print(p)
+
+    dev.off()
+  }
+  
+  if(i == "NBE44"){
+    pdf(paste0(panel.directory, "Figure_S2g.pdf"))
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=Density)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$Density)), max.mutation.time)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=Density, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
+      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
+      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=Density), inherit.aes = F) +
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density)*1.1)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
+    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
+    
+    p <- ggplot(to.plot., aes(x=Density, xmin=Density_lower, xmax=Density_upper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
+      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
+      geom_point() + geom_errorbarh(height=0)+ 
+      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
+                 linetype=2) + 
+      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
+                                  xmax=rep(mutation.time.mrca.upper[i],2),
+                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
+                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
+                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density_upper)*1.1)) +
+      scale_y_continuous(limits=c(0, nrow(to.plot)))
+    
+    print(p)   
+    
+    dev.off()
+  }
+  
+  if(i == "NBE99"){
+    pdf(paste0(panel.directory, "Figure_S2d.pdf"))
+    
+    p <- ggplot(to.plot[to.plot$Timing=="Post-CNV",], aes(x=Density)) + geom_histogram( binwidth = binwidth, fill=manual.colors["Late"])+ 
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits = c(-0.05*(max(to.plot$Density)), max.mutation.time)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    p <-  ggplot(to.plot[to.plot$Timing=="Pre-CNV",], aes(x=Density, fill=Segment)) + geom_histogram( binwidth = binwidth)+ 
+      scale_fill_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot[to.plot$Timing=="Pre-CNV",])))+
+      geom_density(data=to.plot[to.plot$Timing=="Post-CNV",], linetype=2, aes(x=Density), inherit.aes = F) +
+      scale_y_continuous(name="# Genomic segments") + 
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density)*1.1)) +
+      ggtitle(i)
+    
+    print(p)
+    
+    to.plot. <- to.plot[to.plot$Timing=="Pre-CNV",]
+    to.plot.$Segment <- factor(to.plot.$Segment, levels=unique(to.plot.$Segment))
+    
+    p <- ggplot(to.plot., aes(x=Density, xmin=Density_lower, xmax=Density_upper, y=as.numeric(Segment)/nrow(to.plot.), col=Segment)) +
+      scale_color_manual(values=colorRampPalette(brewer.pal(11, "Spectral"))(nrow(to.plot.))) + 
+      geom_point() + geom_errorbarh(height=0)+ 
+      geom_vline(data=data.frame(x=mutation.time.mrca[i]), aes(xintercept=x/3.3/10^3, y=1), inherit.aes = F, col=manual.colors["Late"],
+                 linetype=2) + 
+      geom_ribbon(data=data.frame(xmin=rep(mutation.time.mrca.lower[i],2),
+                                  xmax=rep(mutation.time.mrca.upper[i],2),
+                                  y=c(0, nrow(to.plot[to.plot$Timing=="Pre-CNV",]))), 
+                  aes(xmin=xmin/3.3/10^3, xmax=xmax/3.3/10^3,y=y),
+                  inherit.aes = F, fill=manual.colors["Late"], col=NA, alpha=0.5) +
+      scale_x_continuous(name="Mutations per Mb", limits =  c(-0.05*(max(to.plot$Density)), max(to.plot$Density_upper)*1.1)) +
+      scale_y_continuous(limits=c(0, nrow(to.plot)))
+    
+    print(p)    
+
+    dev.off()
+  }
+  
+}
+
+##############################################################################################################################################
+##### Figure S2b: Compare ECA and MRCA between primary and relapse tumor
+
+mutation.time.eca[names(earliest.mutation.time)] <- earliest.mutation.time
+mutation.time.eca.lower[names(earliest.mutation.time)] <- earliest.mutation.time.lower
+mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time.upper
+
+colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
+to.plot <- cbind(sample.information.80x, data.frame(MRCA=mutation.time.mrca[rownames(sample.information.80x)]/3.3/10^3,
+                                                    ECA=mutation.time.eca[rownames(sample.information.80x)]/3.3/10^3,
+                                                    MRCA.upper=mutation.time.mrca.upper[rownames(sample.information.80x)]/3.3/10^3,
+                                                    MRCA.lower=mutation.time.mrca.lower[rownames(sample.information.80x)]/3.3/10^3,
+                                                    ECA.upper=mutation.time.eca.upper[rownames(sample.information.80x)]/3.3/10^3,
+                                                    ECA.lower=mutation.time.eca.lower[rownames(sample.information.80x)]/3.3/10^3))
+
+to.plot$Time <- sample.information.80x$Sample.type.as.in.paper
+to.plot$Time[to.plot$Time=="Relapse 3"] <- "Relapse"
+to.plot$Time[to.plot$Time %in% c("Relapse tumor", "Relapse metastasis")] <- "Relapse"
+
+to.plot$Subtype <- sample.information.80x$Subtype
+to.plot$Time <- factor(to.plot$Time, levels=c("Primary", "Metastasis", "Relapse"))
+
+
+addWorksheet(wb.s, "b_ECA")
+writeData(wb.s, "b_ECA", to.plot[,c("ECA", "ECA.lower", "ECA.upper", "Ploidy", "Time")])
+addWorksheet(wb.s, "b_MRCA")
+writeData(wb.s, "b_MRCA", to.plot[,c("MRCA", "MRCA.lower", "MRCA.upper", "Ploidy", "Time")])
+
+
+pdf(paste0(panel.directory, "Figure_S2b.pdf"), width=4, height=4, useDingbats = F)
+
+ggplot(to.plot[to.plot$ECA!=to.plot$MRCA,], aes(x=Time, y=ECA, col=as.character(Ploidy)))+geom_quasirandom() +
+  scale_color_manual(values=c("2" = "black", "3" = "orange", "4" = "firebrick")) +
+  scale_x_discrete( breaks = c("Primary FALSE", "Primary TRUE", "Metastasis FALSE"),
+                    labels=c("Primary untreated", "Primary treated", "Metastasis"))+ 
+  theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio=1,
+         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  scale_y_continuous(name = "SSNVs/Mb at ECA")
+
+wilcox.test(to.plot[to.plot$Time=="Primary" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Metastasis" & to.plot$ECA!= to.plot$MRCA,]$ECA)
+wilcox.test(to.plot[to.plot$Time=="Primary" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Relapse" & to.plot$ECA!= to.plot$MRCA,]$ECA)
+wilcox.test(to.plot[to.plot$Time=="Relapse" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Metastasis" & to.plot$ECA!= to.plot$MRCA,]$ECA)
+
+ggplot(to.plot, aes(x=Time, y=MRCA, col=as.character(Ploidy)))+geom_quasirandom() +
+  scale_color_manual(values=c("2" = "black", "3" = "orange", "4" = "firebrick")) +
+  scale_x_discrete( breaks = c("Primary FALSE", "Primary TRUE", "Metastasis FALSE"),
+                    labels=c("Primary untreated", "Primary treated", "Metastasis"))+ 
+  theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio=1,
+         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
+  scale_y_continuous(name = "SSNVs/Mb at MRCA")
+
+wilcox.test(to.plot[to.plot$Time=="Primary",]$MRCA, to.plot[to.plot$Time=="Metastasis",]$MRCA)
+wilcox.test(to.plot[to.plot$Time=="Primary",]$MRCA, to.plot[to.plot$Time=="Relapse",]$MRCA)
+wilcox.test(to.plot[to.plot$Time=="Metastasis",]$MRCA, to.plot[to.plot$Time=="Relapse",]$MRCA)
+
+dev.off()
+
+##############################################################################################################################################
+##### Figure S2e: Early MRCA with and without ECA; discovery cohort
+
+pearly <- list()
+
+for(ECA.exists in c(T, F)){
+  
+  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+                                   sample.information.80x$ECA.exists==ECA.exists &
+                                   mutation.time.mrca[rownames(sample.information.80x)]/3.3/10^3 < cutpoint,,drop=F]
+  
+  if(nrow(subset)==0){next}
+  
+  
+  subset$Telomere.maintenance.mechanism <- factor(subset$Telomere.maintenance.mechanism,
+                                                  levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
+  
+  subset$MRCAtime <- mutation.time.mrca[rownames(subset)]
+  subset <- subset[order(subset$MRCAtime),]
+  
+  
+  to.plot <- cbind(subset, data.frame(MRCA=mutation.time.mrca[rownames(subset)]/3.3/10^3,
+                                      ECA=mutation.time.eca[rownames(subset)]/3.3/10^3,
+                                      MRCA.upper=mutation.time.mrca.upper[rownames(subset)]/3.3/10^3,
+                                      MRCA.lower=mutation.time.mrca.lower[rownames(subset)]/3.3/10^3,
+                                      ECA.upper=mutation.time.eca.upper[rownames(subset)]/3.3/10^3,
+                                      ECA.lower=mutation.time.eca.lower[rownames(subset)]/3.3/10^3))
+  
+  
+  
+  if(ECA.exists){
+    panel="S2e_ECA"
+  }else{
+    panel="S2e_no_ECA"
+  }
+  
+  addWorksheet(wb.s, panel)
+  writeData(wb.s, panel, to.plot[,c("ECA", "ECA.lower", "ECA.upper", "MRCA", "MRCA.lower", "MRCA.upper")])
+  
+  
+  
+  pearly[[length(pearly)+1]] <- ggplot(data = to.plot[order(to.plot$MRCA),],
+                                       aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
+                                           ymin =  sapply(sort(MRCA), function(x){
+                                             sum(MRCA.upper <= x)
+                                           })/length(MRCA),
+                                           ymax= sapply(sort(MRCA), function(x){
+                                             sum(MRCA.lower <= x)
+                                           })/length(MRCA)
+                                       )) +
+    stat_ecdf(col=unname(manual.colors["Late"])) +
+    geom_stepribbon(fill=unname(manual.colors["Late"]), alpha=0.5, col=NA)+
+    scale_x_continuous(name = "Mutations/Mb",
+                       limits=c(0, max.mutation.time.primary/3.3/10^3))+
+    theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+           panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") +
+    ggtitle(paste("# Cases = ", nrow(subset)))
+  
+  if(ECA.exists){
+    pearly[[length(pearly)]] <- pearly[[length(pearly)]] + 
+      stat_ecdf(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
+                aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA))
+                ),
+                col=unname(manual.colors["Early"])) +
+      geom_stepribbon(data = to.plot[!is.na(to.plot$ECA),][order(to.plot$ECA[!is.na(to.plot$ECA)]),],
+                      aes(x=ECA, y=seq(1/length(ECA),1,length.out = length(ECA)),
+                          ymin =  sapply(sort(ECA), function(x){
+                            sum(ECA.upper <= x)
+                          })/length(ECA),
+                          ymax= sapply(sort(ECA), function(x){
+                            sum(ECA.lower <= x)
+                          })/length(ECA)
+                      ),
+                      fill=unname(manual.colors["Early"]), alpha=0.5, col=NA) 
+  }
+  
+}
+
+
+pdf(paste0(panel.directory, "Figure_S2e.pdf"), width=9, height=9, useDingbats = F)
+
+figure <- ggarrange(plotlist=pearly, nrow=3, ncol=3)
+annotate_figure(figure, top="Primary tumor / Metastasis")
+
+dev.off()
 ##############################################################################################################################################
 ## Figure S2b_d_f_h: density distributions for MRCA and ECA - detection data set
 source(paste0(custom.script.directory, "Oncoprint.R"))
@@ -348,7 +486,7 @@ mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time
 
 colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
 
-max.mutation.time.primary <- max(mutation.time.mrca[sample.information.80x$Patient_ID[sample.information.80x$Location=="Primary" &
+max.mutation.time.primary <- max(mutation.time.mrca[sample.information.80x$Patient_ID[sample.information.80x$Sample.type.as.in.paper=="Primary" &
                                                                                                sample.information.80x$Treatment==FALSE]], na.rm=T)
 
 sample.information.80x$Telomere.maintenance.mechanism <- factor(sample.information.80x$Telomere.maintenance.mechanism,
@@ -368,7 +506,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
                                    sample.information.80x$ECA.exists==T &
                                    sample.information.80x$Ploidy %in% ploidy,,drop=F]
   
@@ -503,7 +641,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
                                    sample.information.80x$ECA.exists==F &
                                    sample.information.80x$Ploidy %in% ploidy,,drop=F]
   
@@ -736,12 +874,12 @@ pdf(paste0(panel.directory,"Figure_S2f.pdf"), width=2, height=2.2, useDingbats =
 to.plot <- rbind(data.frame(Chromosomes=numbers.of.3n.chromosomes.at.single.event/numbers.of.3n.chromosomes,
                             Tumor=triploid.tumors.80x,
                             Telomere.type=telomere.classification.80x[triploid.tumors.80x],
-                            Time = sample.information.80x[triploid.tumors.80x,]$Location,
+                            Time = sample.information.80x[triploid.tumors.80x,]$Sample.type.as.in.paper,
                             Ploidy=3),
                  data.frame(Chromosomes=numbers.of.4n.chromosomes.at.single.event/numbers.of.4n.chromosomes,
                             Tumor=tetraploid.tumors.80x,
                             Telomere.type=telomere.classification.80x[tetraploid.tumors.80x],
-                            Time = sample.information.80x[tetraploid.tumors.80x,]$Location,
+                            Time = sample.information.80x[tetraploid.tumors.80x,]$Sample.type.as.in.paper,
                             Ploidy=4))
 
 
@@ -758,63 +896,6 @@ ggplot(to.plot, aes(x=Ploidy, y=Chromosomes,group=Ploidy)) + geom_boxplot(width=
 dev.off()
 
 
-
-##############################################################################################################################################
-##### Figure S2g: Compare ECA and MRCA between primary and relapse tumor
-
-mutation.time.eca[names(earliest.mutation.time)] <- earliest.mutation.time
-mutation.time.eca.lower[names(earliest.mutation.time)] <- earliest.mutation.time.lower
-mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time.upper
-
-colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
-to.plot <- cbind(sample.information.80x, data.frame(MRCA=mutation.time.mrca[rownames(sample.information.80x)]/3.3/10^3,
-                                                    ECA=mutation.time.eca[rownames(sample.information.80x)]/3.3/10^3,
-                                                    MRCA.upper=mutation.time.mrca.upper[rownames(sample.information.80x)]/3.3/10^3,
-                                                    MRCA.lower=mutation.time.mrca.lower[rownames(sample.information.80x)]/3.3/10^3,
-                                                    ECA.upper=mutation.time.eca.upper[rownames(sample.information.80x)]/3.3/10^3,
-                                                    ECA.lower=mutation.time.eca.lower[rownames(sample.information.80x)]/3.3/10^3))
-
-to.plot$Time <- sample.information.80x$Location
-to.plot$Time[to.plot$Time=="Relapse 3"] <- "Relapse"
-to.plot$Time[to.plot$Time %in% c("Relapse tumor", "Relapse metastasis")] <- "Relapse"
-
-to.plot$Subtype <- sample.information.80x$Subtype
-to.plot$Time <- factor(to.plot$Time, levels=c("Primary", "Metastasis", "Relapse"))
-
-
-addWorksheet(wb.s, "g_ECA")
-writeData(wb.s, "g_ECA", to.plot[,c("ECA", "ECA.lower", "ECA.upper", "Ploidy", "Time")])
-addWorksheet(wb.s, "g_MRCA")
-writeData(wb.s, "g_MRCA", to.plot[,c("MRCA", "MRCA.lower", "MRCA.upper", "Ploidy", "Time")])
-
-
-pdf(paste0(panel.directory, "Figure_S2g.pdf"), width=4, height=4, useDingbats = F)
-
-ggplot(to.plot[to.plot$ECA!=to.plot$MRCA,], aes(x=Time, y=ECA, col=as.character(Ploidy)))+geom_quasirandom() +
-  scale_color_manual(values=c("2" = "black", "3" = "orange", "4" = "firebrick")) +
-  scale_x_discrete( breaks = c("Primary FALSE", "Primary TRUE", "Metastasis FALSE"),
-                    labels=c("Primary untreated", "Primary treated", "Metastasis"))+ 
-  theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio=1,
-         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-  scale_y_continuous(name = "SSNVs/Mb at ECA")
-
-wilcox.test(to.plot[to.plot$Time=="Primary" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Metastasis" & to.plot$ECA!= to.plot$MRCA,]$ECA)
-wilcox.test(to.plot[to.plot$Time=="Primary" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Relapse" & to.plot$ECA!= to.plot$MRCA,]$ECA)
-wilcox.test(to.plot[to.plot$Time=="Relapse" & to.plot$ECA!= to.plot$MRCA,]$ECA, to.plot[to.plot$Time=="Metastasis" & to.plot$ECA!= to.plot$MRCA,]$ECA)
-
-ggplot(to.plot, aes(x=Time, y=MRCA, col=as.character(Ploidy)))+geom_quasirandom() +
-  scale_color_manual(values=c("2" = "black", "3" = "orange", "4" = "firebrick")) +
-  scale_x_discrete( breaks = c("Primary FALSE", "Primary TRUE", "Metastasis FALSE"),
-                    labels=c("Primary untreated", "Primary treated", "Metastasis"))+ 
-  theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(), aspect.ratio=1,
-         panel.background = element_blank(), axis.line = element_line(colour = "black")) + 
-  scale_y_continuous(name = "SSNVs/Mb at MRCA")
-
-wilcox.test(to.plot[to.plot$Time=="Primary",]$MRCA, to.plot[to.plot$Time=="Metastasis",]$MRCA)
-wilcox.test(to.plot[to.plot$Time=="Primary",]$MRCA, to.plot[to.plot$Time=="Relapse",]$MRCA)
-wilcox.test(to.plot[to.plot$Time=="Metastasis",]$MRCA, to.plot[to.plot$Time=="Relapse",]$MRCA)
-
-dev.off()
 
 
 
@@ -843,7 +924,7 @@ colnames(sample.information.30x)[which(colnames(sample.information.30x)=="ECA")]
 sample.information.30x$ECA.exists <- as.logical(sample.information.30x$ECA.exists)
 sample.information.30x$Ploidy <- sample.information.30x$Rounded.ploidy
 
-max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.30x)[sample.information.30x$Location=="Primary"]], na.rm=T)
+max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.30x)[sample.information.30x$Sample.type.as.in.paper=="Primary"]], na.rm=T)
 
 sample.information.30x$Telomere.maintenance.mechanism <- factor(sample.information.30x$Telomere.maintenance.mechanism,
                                                                 levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
@@ -862,7 +943,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.30x[ sample.information.30x$Location %in% c("Primary", "Metastasis") &
+  subset=sample.information.30x[ sample.information.30x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
                                    sample.information.30x$ECA.exists==T &
                                    sample.information.30x$Ploidy %in% ploidy,,drop=F]
   
@@ -997,7 +1078,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.30x[ sample.information.30x$Location %in% c("Primary", "Metastasis") &
+  subset=sample.information.30x[ sample.information.30x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
                                    sample.information.30x$ECA.exists==F &
                                    sample.information.30x$Ploidy %in% ploidy,,drop=F]
   
