@@ -81,4 +81,4 @@ save(estimated.mutation.rate.per.day, file=paste0(custom.script.directory, "Esti
 median(effective.mutation.rates[1,subset$Telomere.maintenance.mechanism!="None"])
 
 
-## 175
+## 136
