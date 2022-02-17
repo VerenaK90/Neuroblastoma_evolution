@@ -86,6 +86,10 @@ sample.information.80x[sample.information.80x$Stage == "4",]$ManualScore <- "HR"
 
 sample.information.80x$Stage[sample.information.80x$Stage %in% c("2.1", "2.2")] <- "2"
 
+## in rare cases, gains were timed <ECA or between ECA and MRCA; replae <ECA with ECA and ECA<x<MRCA with ECA/MRCA, as we don't distinguish this level for plotting
+sample.information.80x <- replace(sample.information.80x, sample.information.80x=="before ECA", "ECA")
+sample.information.80x <- replace(sample.information.80x, sample.information.80x=="between ECA and MRCA", "ECA/MRCA")
+
 tumors.80x <- sample.information.80x$Tumor_ID
 
 ## Stratify by Lesion type (merge primary and metastasis)
@@ -114,6 +118,10 @@ tumors.30x <- rownames(sample.information.30x)
 sample.information.30x$ManualScore <- "LR"
 sample.information.30x[sample.information.30x$Stage == "3",]$ManualScore <- "IR"
 sample.information.30x[sample.information.30x$Stage == "4",]$ManualScore <- "HR"
+
+## in rare cases, gains were timed <ECA or between ECA and MRCA; replae <ECA with ECA and ECA<x<MRCA with ECA/MRCA, as we don't distinguish this level for plotting
+sample.information.30x <- replace(sample.information.30x, sample.information.30x=="before ECA", "ECA")
+sample.information.30x <- replace(sample.information.30x, sample.information.30x=="between ECA and MRCA", "ECA/MRCA")
 
 ## Stratify by ploidy
 diploid.tumors.30x <- rownames(sample.information.30x[sample.information.30x$Rounded.ploidy==2,])
