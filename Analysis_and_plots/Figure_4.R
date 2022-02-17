@@ -400,12 +400,12 @@ dev.off()
 ##############################################################################################################################################
 ## Figure 4j: Cox regression
 
+
 pdf(paste0(panel.directory,"Figure_4j.pdf"), useDingbats = F, width = 4, height=4)
 
-ggforest(fit.coxph, data = joined.categorized.by.MRCA)
+ggforest(fit.coxph.efs, data = joined.categorized.by.MRCA, main = "EFS")
 
 dev.off()
-
 ##########################################################################################################################################
 
 saveWorkbook(wb, file = paste0(panel.directory,"Source_data_Fig.4.xlsx"), overwrite=T)
