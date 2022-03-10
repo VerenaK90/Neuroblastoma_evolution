@@ -438,8 +438,8 @@ to.plot <- data.frame(Age=subset$Age/365, mu.eff.mean = effective.mutation.rates
 
 to.plot <- to.plot[!to.plot$Location %in% c("Relapse tumor", "Relapse metastasis"),] 
 
-to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT"),]
-to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT"))
+to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT", "None"),]
+to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT", "None"))
 
 addWorksheet(wb, "g")
 writeData(wb, "g", to.plot) 
@@ -471,9 +471,8 @@ to.plot <- data.frame(delta.mean = sapply(unique(subset$Telomere.maintenance.mec
     sqrt(sum((deltas[2,subset$Telomere.maintenance.mechanism==x& subset$Location %in% c("Primary", "Metastasis")])^2))/sum(subset$Telomere.maintenance.mechanism==x& subset$Location %in% c("Primary", "Metastasis"))}),
   Subtype=unique(subset$Telomere.maintenance.mechanism))
 
-to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT"),]
-
-to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT"))
+to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT", "None"),]
+to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT", "None"))
 
 addWorksheet(wb, "h")
 writeData(wb, "h", to.plot) 
@@ -502,9 +501,9 @@ to.plot <- data.frame(division.rate.mean = sapply(unique(subset$Telomere.mainten
     sqrt(sum((division.rate[2,subset$Telomere.maintenance.mechanism==x & subset$Location %in% c("Primary", "Metastasis")])^2))/sum(subset$Telomere.maintenance.mechanism==x & subset$Location %in% c("Primary", "Metastasis"))}),
   Telomere.maintenance.mechanism=unique(subset$Telomere.maintenance.mechanism))
 
-to.plot <- to.plot[to.plot$Telomere.maintenance.mechanism %in% c("MNA", "TERT", "ALT"),]
+to.plot <- to.plot[to.plot$Telomere.maintenance.mechanism %in% c("MNA", "TERT", "ALT", "None"),]
 
-to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism, levels=c("MNA", "TERT", "ALT"))
+to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism, levels=c("MNA", "TERT", "ALT", "None"))
 
 addWorksheet(wb, "i")
 writeData(wb, "i", to.plot) 
