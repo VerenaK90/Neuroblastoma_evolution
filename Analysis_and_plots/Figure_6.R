@@ -1,11 +1,8 @@
-## Reproduce Fig. 5
+## Reproduce Fig. 6
 ##############################################################################################################################################
 ### Learn the dynamics of tumor initiation and progression
 ##############################################################################################################################################
 ### Load libraries and settings
-
-
-source("./Nextcloud/NB_manuscript/Revised_version/Plots_and_scripts/Custom_scripts/Settings.R")
 
 source(paste0(custom.script.directory, "Plotting_function_CI.R"))
 
