@@ -1,6 +1,6 @@
 # Neuroblastoma_evolution
 
-This repository contains custom code associated with the manuscript "Genetic origin of neuroblastoma in early embryogenesis" by Verena Körber et al.
+This repository contains custom code associated with the manuscript "Genetic origin of neuroblastoma in early fetal development" by Verena Körber et al.
 
 The folder Functions contains function scripts written for the analysis. In the folder Analysis_and_plots you can find scripts to analyze the data with these functions and scripts for plotting. Associated example data (copy number information and SNVs) is provided in the folder Example_data.
 
