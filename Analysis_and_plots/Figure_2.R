@@ -347,7 +347,7 @@ to.plot <- cbind(sample.information.80x, data.frame(MRCA=mutation.time.mrca[rown
                                                     ECA.upper=mutation.time.eca.upper[rownames(sample.information.80x)]/3.3/10^3,
                                                     ECA.lower=mutation.time.eca.lower[rownames(sample.information.80x)]/3.3/10^3))
 
-to.plot$Time <- sample.information.80x$Sample.type.as.in.paper
+to.plot$Time <- sample.information.80x$Location
 to.plot$Time[to.plot$Time=="Relapse 3"] <- "Relapse"
 to.plot$Time[to.plot$Time %in% c("Relapse tumor", "Relapse metastasis")] <- "Relapse"
 
@@ -396,7 +396,7 @@ pearly <- list()
 
 for(ECA.exists in c(T, F)){
   
-  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
                                    sample.information.80x$ECA.exists==ECA.exists &
                                    mutation.time.mrca[rownames(sample.information.80x)]/3.3/10^3 < cutpoint,,drop=F]
   
@@ -486,7 +486,7 @@ mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time
 
 colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
 
-max.mutation.time.primary <- max(mutation.time.mrca[sample.information.80x$Patient_ID[sample.information.80x$Sample.type.as.in.paper=="Primary" &
+max.mutation.time.primary <- max(mutation.time.mrca[sample.information.80x$Patient_ID[sample.information.80x$Location=="Primary" &
                                                                                                sample.information.80x$Treatment==FALSE]], na.rm=T)
 
 sample.information.80x$Telomere.maintenance.mechanism <- factor(sample.information.80x$Telomere.maintenance.mechanism,
@@ -506,7 +506,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
                                    sample.information.80x$ECA.exists==T &
                                    sample.information.80x$Ploidy %in% ploidy,,drop=F]
   
@@ -641,7 +641,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
                                    sample.information.80x$ECA.exists==F &
                                    sample.information.80x$Ploidy %in% ploidy,,drop=F]
   
@@ -874,12 +874,12 @@ pdf(paste0(panel.directory,"Figure_S2f.pdf"), width=2, height=2.2, useDingbats =
 to.plot <- rbind(data.frame(Chromosomes=numbers.of.3n.chromosomes.at.single.event/numbers.of.3n.chromosomes,
                             Tumor=triploid.tumors.80x,
                             Telomere.type=telomere.classification.80x[triploid.tumors.80x],
-                            Time = sample.information.80x[triploid.tumors.80x,]$Sample.type.as.in.paper,
+                            Time = sample.information.80x[triploid.tumors.80x,]$Location,
                             Ploidy=3),
                  data.frame(Chromosomes=numbers.of.4n.chromosomes.at.single.event/numbers.of.4n.chromosomes,
                             Tumor=tetraploid.tumors.80x,
                             Telomere.type=telomere.classification.80x[tetraploid.tumors.80x],
-                            Time = sample.information.80x[tetraploid.tumors.80x,]$Sample.type.as.in.paper,
+                            Time = sample.information.80x[tetraploid.tumors.80x,]$Location,
                             Ploidy=4))
 
 
@@ -924,7 +924,7 @@ colnames(sample.information.30x)[which(colnames(sample.information.30x)=="ECA")]
 sample.information.30x$ECA.exists <- as.logical(sample.information.30x$ECA.exists)
 sample.information.30x$Ploidy <- sample.information.30x$Rounded.ploidy
 
-max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.30x)[sample.information.30x$Sample.type.as.in.paper=="Primary"]], na.rm=T)
+max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.30x)[sample.information.30x$Location=="Primary"]], na.rm=T)
 
 sample.information.30x$Telomere.maintenance.mechanism <- factor(sample.information.30x$Telomere.maintenance.mechanism,
                                                                 levels=c("MNA", "TERT", "ALT", "Multiple", "None"))
@@ -943,7 +943,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.30x[ sample.information.30x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.30x[ sample.information.30x$Location %in% c("Primary", "Metastasis") &
                                    sample.information.30x$ECA.exists==T &
                                    sample.information.30x$Ploidy %in% ploidy,,drop=F]
   
@@ -1078,7 +1078,7 @@ for(ploidy in c("triploid", "di-tetraploid")){
     ploidy <- c(2,4)
   }
   
-  subset=sample.information.30x[ sample.information.30x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.30x[ sample.information.30x$Location %in% c("Primary", "Metastasis") &
                                    sample.information.30x$ECA.exists==F &
                                    sample.information.30x$Ploidy %in% ploidy,,drop=F]
   
