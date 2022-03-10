@@ -78,6 +78,7 @@ source(paste0(function.directory, "Model_NB_initiation.R"))
 
 sample.information.80x <- read.xlsx(paste0(meta.data, "Supplementary\ Table1.xlsx"), sheet = 1)
 rownames(sample.information.80x) <- sample.information.80x$Tumor_ID
+colnames(sample.information.80x)[colnames(sample.information.80x)=="Sample.type.as.in.paper"] <- "Location"
 
 ## classify stage 1, 4S, 2 as low-risk, stage 3 as intermediate risk and stage 4 as high-risk
 sample.information.80x$ManualScore <- "LR"
@@ -112,6 +113,7 @@ diploid.tumors.80x <- rownames(sample.information.80x[sample.information.80x$Plo
 
 sample.information.30x <-  read.xlsx(paste0(meta.data, "Supplementary\ Table1.xlsx"), sheet = 2)
 rownames(sample.information.30x) <- sample.information.30x$Tumor_ID
+colnames(sample.information.30x)[colnames(sample.information.30x)=="Sample.type"] <- "Location"
 
 tumors.30x <- rownames(sample.information.30x)
 
