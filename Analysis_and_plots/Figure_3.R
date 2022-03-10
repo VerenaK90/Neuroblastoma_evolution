@@ -54,7 +54,7 @@ mutation.time.eca.upper[names(earliest.mutation.time)] <- earliest.mutation.time
 
 colnames(sample.information.80x)[which(colnames(sample.information.80x)=="ECA")] <- "ECA.exists"
 
-max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.80x[sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Relapse"),])],
+max.mutation.time.primary <- max(mutation.time.mrca[rownames(sample.information.80x[sample.information.80x$Location %in% c("Primary", "Relapse"),])],
                                  na.rm=T)
 
 sample.information.80x$Telomere.maintenance.mechanism <- factor(sample.information.80x$Telomere.maintenance.mechanism,
@@ -72,7 +72,7 @@ plate.subset.list <- list()
 
 for(ECA.exists in c(T, F)){
   
-  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
                                    sample.information.80x$ECA.exists==ECA.exists &
                                    mutation.time.mrca[rownames(sample.information.80x)]/3.3/10^3 >=cutpoint,,drop=F]
   
@@ -216,7 +216,7 @@ pearly.unsplit.subset.list <- list()
 
 for(ECA.exists in c( F)){
   
-  subset=sample.information.80x[ sample.information.80x$Sample.type.as.in.paper %in% c("Primary", "Metastasis") &
+  subset=sample.information.80x[ sample.information.80x$Location %in% c("Primary", "Metastasis") &
                                    mutation.time.mrca[rownames(sample.information.80x)]/3.3/10^3 < cutpoint,,drop=F]
   
   if(nrow(subset)==0){next}
