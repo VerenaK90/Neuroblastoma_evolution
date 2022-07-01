@@ -13,7 +13,7 @@ mySumStatData <- list(NB_origin=NB_origin, NB_origin.upper=NB_origin.upper, NB_o
                       NB_origin.eca = NB_origin.eca, NB_origin.eca.upper = NB_origin.eca.upper, NB_origin.eca.lower = NB_origin.eca.lower)
 
 
-model <- "continuous"
+model <- "contraction"
 ##### my model
 
 myModel <- function(parms){
