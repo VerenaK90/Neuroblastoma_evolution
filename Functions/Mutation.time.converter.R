@@ -2,7 +2,7 @@
 #'
 #' The number of clonal mutations found in a clonal peak does not necessarily correspond to "mutation time" as mutations are lost from the non-amplified clonal peak by a chromosomal gain. This function corrects for such losses, rendering mutation times comparable.
 #' @param clonal.mutations A vector with clonal mutation counts for different copy number and allele states. Corresponds to a column of the clonal.mutation.matrix as returned by Count.clonal.mutations().
-#' @param max.CN maximal copy number to be considered. Defaults to 4.  Which information is to be retrieved? Possible values are "readcounts", "depth", "VAF", "AA_change". Defaults to "readcounts".
+#' @param max.CN maximal copy number to be considered. Defaults to 4.  
 #' Mutation.time.converter()
 
 Mutation.time.converter <- function(clonal.mutations, max.CN=4){
