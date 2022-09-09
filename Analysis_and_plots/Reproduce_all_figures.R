@@ -1,7 +1,0 @@
-source("./Settings.R")
-source("./Figure_1.R")
-source("./Figure_2.R")
-source("./Figure_3.R")
-source("./Figure_4.R")
-source("./Figure_5.R")
-source("./Figure_6.R")
