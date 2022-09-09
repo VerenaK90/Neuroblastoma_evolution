@@ -1,0 +1,7 @@
+source(paste0(custom.script.directory, "./Figure_1.R"))
+source(paste0(custom.script.directory, "./Figure_2.R"))
+source(paste0(custom.script.directory, "./Figure_3.R"))
+source(paste0(custom.script.directory, "./Figure_4.R"))
+source(paste0(custom.script.directory, "./Figure_5.R"))
+source(paste0(custom.script.directory, "./Figure_6.R"))
+
