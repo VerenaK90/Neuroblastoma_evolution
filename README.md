@@ -50,10 +50,10 @@ This function estimates the mutation density at the most recent common ancestor 
 Model_NB.initiation.R This script contains a set of functions to fit a population genetics model of neuroblatoma initiation to the measured densities at ECA and MRCA. 
 
 ## Estimate the mutation density at MRCA and ECA for a single example tumor
-Please refer to the tutorial Example/Example_code_mutation_density.pdf
+Please refer to the tutorial Example/Example_code_mutation_density.pdf and also download the folder "RData"
 
 ## Analyze the data with population genetics models using uploaded input data
-Please refer to the tutorial Example/Dynamics_of_neuroblastoma_initiation.pdf
+Please refer to the tutorial Example/Dynamics_of_neuroblastoma_initiation.pdf and also download the folder "RData"
 
 ## Analysis
 To reproduce the analysis do the following steps:
