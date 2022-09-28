@@ -283,35 +283,10 @@ filtered.functional.mutations$Known_driver <- apply(filtered.functional.mutation
 })
 
 
-## change ID to NEB and save workbook
-NEB.info <- read.xlsx(paste0(meta.data, "Verena_final_21_1_21.xlsx"))
-## store all functional mutations
-addWorksheet(wb, "SNVs and Indels")
-tmp <- filtered.functional.mutations[filtered.functional.mutations$SAMPLE %in% tumors.discovery,,drop=F]
-tmp$SAMPLE <- sapply(tmp$SAMPLE, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
-writeData(wb, "SNVs and Indels", tmp)
-
-addWorksheet(wb, "Structural variants")
-tmp <- translocations.for.output[translocations.for.output$Sample %in% tumors.discovery,]
-tmp$Sample <- sapply(tmp$Sample, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
-writeData(wb, "Structural variants", tmp)
-
-addWorksheet(wb, "Homozygous deletions")
-tmp <- deletions.for.output[deletions.for.output$Sample %in% tumors.discovery,]
-tmp$Sample <- sapply(tmp$Sample, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
-writeData(wb, "Homozygous deletions", tmp)
-
-addWorksheet(wb, "Amplifications")
-tmp <- amplifications.for.output[amplifications.for.output$Sample %in% tumors.discovery,]
-tmp$Sample <- sapply(tmp$Sample, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
-writeData(wb, "Amplifications", tmp)
-
-saveWorkbook(wb, file = paste0(meta.data, "Driver_mutations_with_pos_and_sample.xlsx"), overwrite=T)
-
 
 write.table(filtered.functional.mutations[filtered.functional.mutations$GENE %in% driver.genes &
                                             filtered.functional.mutations$SAMPLE %in% tumors.discovery,], 
-            file=paste0(meta.data, "Driver_mutations_cohort.tsv"), sep="\t")
+            file=paste0("./Processed_data/NB_drivers_cohort.tsv"), sep="\t")
 
 
 ## Ignore structural variants in ATRX as we have the more detailed info here already from Hartlieb et al., 2020
@@ -385,7 +360,7 @@ mat[mat=="whole chromosome loss; stopgain"] <- "stopgain"
 ## Take information from Hartlieb et al., 2020 for MNA/TERT
 mat["MYCN",sample.information.discovery[colnames(mat),"Telomere.maintenance.mechanism"]=="MNA"] <- paste(mat["MYCN",sample.information.discovery[colnames(mat),"Telomere.maintenance.mechanism"]=="MNA"], "AMP", sep=";")
 mat["TERT",sample.information.discovery[colnames(mat),"Telomere.maintenance.mechanism"]=="TERT"] <- paste(mat["TERT",sample.information.discovery[colnames(mat),"Telomere.maintenance.mechanism"]=="TERT"], "SV", sep=";")
-## adjust heterogeneous cases (they were annnotated as "HET" in the excel file but have SVs in TERT and amplifications in MYCN)
+## adjust heterogeneous cases (they were annnotated as "Multiple" in the excel file but have SVs in TERT and amplifications in MYCN)
 mat["TERT","NBE57"] <- "SV"
 mat["MYCN","NBE57"] <- "AMP"
 mat["MYCN","NBE19"] <- "AMP"
