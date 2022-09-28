@@ -24,25 +24,31 @@ amplifications <- data.frame(gene=c(), Sample=c())
 deletions <- data.frame(gene=c(), Sample=c())
 
 ## iterate through the tumors
-for(i in tumors.discovery){
+for(i in c(tumors.discovery, tumors.validation)){
   
   print(i)
   
+  if(i %in% tumors.discovery){
+    data.directory <- data.directory.discovery
+  }else{
+    data.directory <- data.directory.validation
+  }
+  
   ## Read in combined estimates of ploidy and purity:
-  aceseq <- list.files(paste0(data.directory.discovery,  i, "/", cnv.directory, "/"), pattern="comb_pro_extra")[1]
+  aceseq <- list.files(paste0(data.directory,  i, "/", cnv.directory, "/"), pattern="comb_pro_extra")[1]
   if(is.na(aceseq)){next}
   purity. <- Extract.purity.ploidy.from.ACEseq(aceseq)$purity
   ploidy. <- Extract.purity.ploidy.from.ACEseq(aceseq)$ploidy
   
    
   ## Read in the mutation file
-  files <- list.files(paste0(data.directory.discovery,  i, "/", snv.directory, "/"), pattern="somatic_snvs_conf_8_to_10")[1]
+  files <- list.files(paste0(data.directory,  i, "/", snv.directory, "/"), pattern="somatic_snvs_conf_8_to_10")[1]
   if(is.na(files)){
     print(i)
     next
   }
   
-  mutations <- read.vcf(paste0(data.directory.discovery,  i, "/", snv.directory, "/", files))
+  mutations <- read.vcf(paste0(data.directory,  i, "/", snv.directory, "/", files))
   mutations$vcf <- mutations$vcf[mutations$vcf$ANNOVAR_FUNCTION %in% c("exonic", "upstream", "splicing"),]
   colnames(mutations$vcf)[10] <- "FORMAT_INFO"
   mutations$vcf <- mutations$vcf[,c(1:10, 16, 17, 18, 19)]
@@ -53,7 +59,7 @@ for(i in tumors.discovery){
   counts <- Extract.info.from.vcf(mutations, info="readcounts")
   
   
-  copy.number.info. <- read.delim(file=paste0(data.directory.discovery,  i, "/", cnv.directory, "/", aceseq), sep="\t", stringsAsFactors = F)
+  copy.number.info. <- read.delim(file=paste0(data.directory,  i, "/", cnv.directory, "/", aceseq), sep="\t", stringsAsFactors = F)
   ## obtain the coverage ratios/BAF/genotype/TCN for the mutations of interest
   cnv.info.per.mutation <- Extract.copy.number.info.per.SSNV(mutations, copy.number.info.)
   ## obtain the coverage ratios at mutated loci
@@ -82,13 +88,13 @@ for(i in tumors.discovery){
   ## same for indels
   
   ## read in the mutation file
-  files <- list.files(paste0(data.directory.discovery,  i, "/", indel.directory, "/"), pattern="somatic_indels_conf_8_to_10")[1]
+  files <- list.files(paste0(data.directory,  i, "/", indel.directory, "/"), pattern="somatic_indels_conf_8_to_10")[1]
   if(is.na(files)){
     print(i)
     next
   }
   
-  mutations <- read.vcf(paste0(data.directory.discovery,  i, "/", indel.directory, "/", files))
+  mutations <- read.vcf(paste0(data.directory,  i, "/", indel.directory, "/", files))
   mutations$vcf <- mutations$vcf[,c(1:9, 11, 17, 18, 19, 20)]
   colnames(mutations$vcf)[10] <- "FORMAT_INFO"
   mutations$vcf$AA_change <- Extract.info.from.vcf(mutations, info="AA_change", type = "indel")
@@ -98,7 +104,7 @@ for(i in tumors.discovery){
   
   counts <- Extract.info.from.vcf(mutations, info="readcounts", type = "indel")
   
-  copy.number.info. <- read.delim(file=paste0(data.directory.discovery,  i, "/", cnv.directory, "/", aceseq), sep="\t", stringsAsFactors = F)
+  copy.number.info. <- read.delim(file=paste0(data.directory,  i, "/", cnv.directory, "/", aceseq), sep="\t", stringsAsFactors = F)
   ## obtain the coverage ratios for the mutations of interest
   cnv.info.per.mutation <- Extract.copy.number.info.per.SSNV(mutations, copy.number.info.)
   ## obtain the coverage ratios at mutated loci
@@ -125,13 +131,14 @@ for(i in tumors.discovery){
   ## look up structural variants 
   
   ## read in the mutation file
-  files <- list.files(paste0(data.directory.discovery,  i, "/", sv.directory, "/"), pattern="filtered_somatic_minEventScore3.tsv")[1]
+  files <- list.files(paste0(data.directory,  i, "/", sv.directory, "/"), pattern="filtered_somatic_minEventScore3.tsv")[1]
   if(is.na(files)){
-    print(i)
+    warning(paste0("no SV info for sample", i))
+    print(paste0("no SV info for sample", i))
     next
   }
   
-  mutations <- read.vcf(paste0(data.directory.discovery,  i, "/", sv.directory, "/", files))
+  mutations <- read.vcf(paste0(data.directory,  i, "/", sv.directory, "/", files))
   mutations <- mutations$vcf
   mutations$genepos1 <- sapply(mutations$gene1, function(x){strsplit(x, split="_")[[1]][2]})
   mutations$genepos2 <- sapply(mutations$gene2, function(x){strsplit(x, split="_")[[1]][2]})
@@ -248,7 +255,7 @@ translocations$SV <- "SV"
 
 ## filter non-promoter TERT mutations
 functional.mutations <- functional.mutations[-which(functional.mutations$GENE=="TERT" &
-                                                      functional.mutations$SAMPLE=="XI003_19142"),]
+                                                      functional.mutations$SAMPLE=="NBE41"),]
 
 ## keep splice-site mutations, nonsynonymous SNVs and indels
 
@@ -275,6 +282,36 @@ filtered.functional.mutations$Known_driver <- apply(filtered.functional.mutation
   }
 })
 
+
+## change ID to NEB and save workbook
+NEB.info <- read.xlsx(paste0(meta.data, "Verena_final_21_1_21.xlsx"))
+## store all functional mutations
+addWorksheet(wb, "SNVs and Indels")
+tmp <- filtered.functional.mutations[filtered.functional.mutations$SAMPLE %in% tumors.discovery,,drop=F]
+tmp$SAMPLE <- sapply(tmp$SAMPLE, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
+writeData(wb, "SNVs and Indels", tmp)
+
+addWorksheet(wb, "Structural variants")
+tmp <- translocations.for.output[translocations.for.output$Sample %in% tumors.discovery,]
+tmp$Sample <- sapply(tmp$Sample, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
+writeData(wb, "Structural variants", tmp)
+
+addWorksheet(wb, "Homozygous deletions")
+tmp <- deletions.for.output[deletions.for.output$Sample %in% tumors.discovery,]
+tmp$Sample <- sapply(tmp$Sample, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
+writeData(wb, "Homozygous deletions", tmp)
+
+addWorksheet(wb, "Amplifications")
+tmp <- amplifications.for.output[amplifications.for.output$Sample %in% tumors.discovery,]
+tmp$Sample <- sapply(tmp$Sample, function(x){NEB.info[NEB.info$XTEN_V==x,"Evolution_paper_Id"]})
+writeData(wb, "Amplifications", tmp)
+
+saveWorkbook(wb, file = paste0(meta.data, "Driver_mutations_with_pos_and_sample.xlsx"), overwrite=T)
+
+
+write.table(filtered.functional.mutations[filtered.functional.mutations$GENE %in% driver.genes &
+                                            filtered.functional.mutations$SAMPLE %in% tumors.discovery,], 
+            file=paste0(meta.data, "Driver_mutations_cohort.tsv"), sep="\t")
 
 
 ## Ignore structural variants in ATRX as we have the more detailed info here already from Hartlieb et al., 2020
@@ -313,15 +350,23 @@ mat <- matrix("", nrow=length(unique(driver.genes)), ncol=length(tumors.discover
               dimnames=list(c(unique(driver.genes)), tumors.discovery))
 
 translocations <- translocations[,c("gene1", "gene2", "Sample", "SV")]
-transolcations <- unique(translocations)
+translocations <- unique(translocations)
 
 for(i in 1:nrow(mat)){
-    mat[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i],]$SAMPLE)] <- filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i],]$EXONIC_CLASSIFICATION
+  
+  tmp <- as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i],]$SAMPLE)
+  tmp <- intersect(tmp, tumors.discovery)
+  
+    mat[i,tmp] <- filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i] &
+                                                  filtered.functional.mutations$SAMPLE %in% tumors.discovery,]$EXONIC_CLASSIFICATION
     
     goi <- rownames(mat)[i]
-    mat[i,as.character(deletions[deletions$gene==goi,]$Sample)] <- paste(mat[i,as.character(deletions[deletions$gene==goi,]$Sample)], "DEL", sep=";")
-    mat[i,as.character(amplifications[amplifications$gene==goi,]$Sample)] <- paste(mat[goi,as.character(amplifications[amplifications$gene==goi,]$Sample)], "AMP", sep=";")
-    mat[i,as.character(translocations[translocations$gene1==goi | translocations$gene2==goi,]$Sample)] <- paste(mat[goi,as.character(translocations[translocations$gene1==i | translocations$gene2==goi,]$Sample)], translocations[translocations$gene1==goi | translocations$gene2==goi,]$SV, sep=";")
+    mat[i,intersect(tumors.discovery, as.character(deletions[deletions$gene==goi,]$Sample))] <- paste(mat[i,intersect(tumors.discovery, as.character(deletions[deletions$gene==goi,]$Sample))], "DEL", sep=";")
+    mat[i,intersect(tumors.discovery, as.character(amplifications[amplifications$gene==goi,]$Sample))] <- paste(mat[goi,intersect(tumors.discovery, as.character(amplifications[amplifications$gene==goi,]$Sample))], "AMP", sep=";")
+    mat[i,as.character(translocations[(translocations$gene1==goi | translocations$gene2==goi) &
+                                        translocations$Sample %in% tumors.discovery,]$Sample)] <- 
+      paste(mat[goi,as.character(translocations[(translocations$gene1==i | translocations$gene2==goi) & translocations$Sample %in% tumors.discovery,]$Sample)], translocations[(translocations$gene1==goi | translocations$gene2==goi)&
+                                                                                                                                                              translocations$Sample %in% tumors.discovery,]$SV, sep=";")
    # mat[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i],]$SAMPLE)] <- paste(mat[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i],]$SAMPLE)], filtered.functional.mutations[filtered.functional.mutations$GENE==rownames(mat)[i],]$Known_driver, sep=";")
 }
 
