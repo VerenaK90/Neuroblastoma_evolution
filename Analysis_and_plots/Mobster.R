@@ -12,7 +12,7 @@ library(cowplot)
 load(paste0(rdata.directory,"Vafs_all_tumors.RData"))
 
 
-drivers <- read.delim("NB_drivers_cohort.tsv")
+drivers <- read.delim("./Processed_data/NB_drivers_cohort.tsv")
 
 for(i in tumors.discovery){
   
