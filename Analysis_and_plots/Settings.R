@@ -36,7 +36,8 @@ library(NBevolution)
 
 ##############################################################################################################################################
 ## set directories
-data.directory.discovery <- "./"
+data.directory.discovery <- "./Data/discovery/"
+
 snv.directory <- "SNVs/"
 indel.directory <- "Indels/"
 sv.directory <- "SVs/"
