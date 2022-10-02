@@ -1,6 +1,6 @@
 ##############################################################################################################################################
 ## read in the driver mutation information
-source("Settings.R")
+source("./Settings.R")
 
 ##############################################################################################################################################
 
@@ -228,11 +228,22 @@ for(i in rownames(matrix.early.late)){
       
     }
     ## accept amplifications/deletions/translocations as drivers
-    matrix.early.late[i,as.character(deletions[deletions$gene==i,]$Sample)] <- paste(matrix.early.late[i,as.character(deletions[deletions$gene==i,]$Sample)], "DEL", "Known_driver", sep=";")
-    matrix.early.late[i,as.character(amplifications[amplifications$gene==i,]$Sample)] <- paste(matrix.early.late[i,as.character(amplifications[amplifications$gene==i,]$Sample)], "AMP", "Known_driver", sep=";")
-    matrix.early.late[i,as.character(translocations[translocations$gene1==i | translocations$gene2==i,]$Sample)] <- paste(matrix.early.late[i,as.character(translocations[translocations$gene1==i | translocations$gene2==i,]$Sample)], translocations[translocations$gene1==i | translocations$gene2==i,]$SV, "Known_driver", sep=";")
-    matrix.early.late[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==i ,]$SAMPLE)] <- paste(matrix.early.late[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==i ,]$SAMPLE)], filtered.functional.mutations[filtered.functional.mutations$GENE==i,]$Known_driver, sep=";")
+    matrix.early.late[i,as.character(deletions[deletions$gene==i & deletions$Sample %in% tumors.discovery,]$Sample)] <- 
+      paste(matrix.early.late[i,as.character(deletions[deletions$gene==i & deletions$Sample %in% tumors.discovery,]$Sample)], "DEL", "Known_driver", sep=";")
+    matrix.early.late[i,as.character(amplifications[amplifications$gene==i & amplifications$Sample %in% tumors.discovery,]$Sample)] <- 
+      paste(matrix.early.late[i,as.character(amplifications[amplifications$gene==i & amplifications$Sample %in% tumors.discovery,]$Sample)], "AMP", "Known_driver", sep=";")
+    matrix.early.late[i, as.character(translocations[(translocations$gene1==i | translocations$gene2==i) & 
+                                                       translocations$Sample %in% tumors.discovery,]$Sample)] <- 
+      paste(matrix.early.late[i, as.character(translocations[(translocations$gene1==i | translocations$gene2==i)&
+                                                               translocations$Sample %in% tumors.discovery,]$Sample)],
+            translocations[(translocations$gene1==i | translocations$gene2==i) & translocations$Sample %in% tumors.discovery,]$SV, "Known_driver", sep=";")
+    matrix.early.late[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==i&
+                                                                     filtered.functional.mutations$SAMPLE %in% tumors.discovery,]$SAMPLE)] <- 
+      paste(matrix.early.late[i,as.character(filtered.functional.mutations[filtered.functional.mutations$GENE==i &
+                                                                             filtered.functional.mutations$SAMPLE %in% tumors.discovery,]$SAMPLE)], 
+            filtered.functional.mutations[filtered.functional.mutations$GENE==i & filtered.functional.mutations$SAMPLE %in% tumors.discovery,]$Known_driver, sep=";")
     
+ 
   }
   
 }
@@ -279,33 +290,3 @@ matrix.early.late["17", matrix.early.late["17q",]!=""] <- ""
 matrix.early.late["1", matrix.early.late["1q",]!=""] <- ""
 matrix.early.late["2", matrix.early.late["2p",]!=""] <- ""
 matrix.early.late["7", matrix.early.late["7q",]!=""] <- ""
-
-# ##############################################################################################################################################
-# #### Count the number of hits/events
-# 
-# nr.hits <- apply(matrix.early.late, 2, function(x){
-#   ## count chromosomal changes only as 2 events if there are at least 2 distinguishable events w.r.t. early late
-#   tmp <- any(x[c("1", "1q", "7", "7q", "17", "17q", "2", "2p", "1p deletion", "11q deletion")] %in% c("early", "early tetraploid")) + 
-#     any(x[c("1", "1q", "2", "2p", "7", "7q",  "17", "17q", "1p deletion", "11q deletion")] %in% c(" late", " late tetraploid"))
-#   if(tmp==0){
-#     tmp <- any(x[c("1", "1q", "7", "7q", "17", "17q", "2", "2p", "1p deletion", "11q deletion")] %in% c("early late", "early tetraploid late tetraploid"))
-#   }
-#   
-#   tmp <- tmp + sum(sapply(x[setdiff(names(x), c("1", "1q", "7", "7q", "17", "17q", "2", "2p", "1p deletion", "11q deletion"))], function(y){
-#     y <- strsplit(y, split=";")[[1]]
-#     if(length(y)==0){
-#       return(0)
-#     }
-#     y <- y[y!="Subclonal" & y!="Known_driver" & y!="NA"]
-#     if(any(y!="")){
-#       1
-#     }else{
-#       0
-#     }
-#   }))
-#   tmp
-# })
-# 
-# 
-# 
-
