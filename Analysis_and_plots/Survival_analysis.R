@@ -8,28 +8,49 @@ if("ECA" %in% colnames(sample.information.discovery)){
 survival.information.discovery <- sample.information.discovery[sample.information.discovery$Sample.type %in% c("Primary", "Metastasis"),
                           c("OS.time.(days)", "OS", "EFS", "EFS.time(days)", "ECA.exists", "Rounded.ploidy", "Telomere.maintenance.mechanism",
                             "17q.gain", "17.gain", "7.gain", "7q.gain", "1.gain", "1q.gain", "1p.deletion", "11q.deletion", "Sex", 
-                            "Stage", "Age", "NB2004", "MYCN.(current.disease.episode)")]
+                            "Stage", "Age", "NB2004", "MYCN.(current.disease.episode)", "RNA_classifier")]
 
 load(paste0(rdata.directory, "MRCA_timing.RData"))
 mutation.time.eca[earliest.mutation.time$Sample,]$Mean <- earliest.mutation.time$Mean
 mutation.time.eca[earliest.mutation.time$Sample,]$Min <- earliest.mutation.time$Min
 mutation.time.eca[earliest.mutation.time$Sample,]$Max <- earliest.mutation.time$Max
 
+#survival.information.discovery$ALK <- mat["ALK", rownames(survival.information.discovery)]
+#survival.information.discovery$ALK <- ifelse( survival.information.discovery$ALK=="", "Reference", "Mutation")
+
 rownames(survival.information.discovery) <- rownames(sample.information.discovery)[sample.information.discovery$Sample.type %in% c("Primary", "Metastasis")]
 colnames(survival.information.discovery) <- c("OS.time.", "OS", "EFS", "EFS.time", "ECA.exists", "Rounded.ploidy", "Telomere.maintenance.mechanism",
                                     "17q.gain", "17.gain", "7.gain", "7q.gain", "1.gain", "1q.gain", "1p.deletion", "11q.deletion", "Sex", 
-                                    "Stage", "Age", "NB2004", "MYCN.(current.disease.episode)")#, "ALK")
+                                    "Stage", "Age", "NB2004", "MYCN.(current.disease.episode)", "RNA_classifier")#, "ALK")
 survival.information.discovery$Rounded.ploidy[survival.information.discovery$Rounded.ploidy %in% c(2,4)] <- "2,4"
 
 survival.information.discovery$MRCA.time <- mutation.time.mrca[rownames(survival.information.discovery),]$Mean
 survival.information.discovery$ECA.time <- mutation.time.eca[rownames(survival.information.discovery),]$Mean
 
+## determine the optimal cut point of the MRCA 
+
+MRCA.cutpoint.discovery <- surv_cutpoint(
+  survival.information.discovery,
+  time = "OS.time.",
+  event = "OS",
+  variables = c("MRCA.time")
+)
+summary(MRCA.cutpoint.discovery)
 
 MRCA.cutpoint <- 0.05
 
 ##########################################################################################################################################
 ### Categorize the data accordingly
-
+# 
+# categorized.by.MRCA <- surv_categorize(MRCA.cutpoint) 
+# categorized.by.MRCA <- cbind(categorized.by.MRCA, survival.information.discovery[rownames(categorized.by.MRCA),
+#                                                                        setdiff(colnames(survival.information.discovery),
+#                                                                                                              c("OS.time.", "OS", "MRCA.time"))])
+# 
+# 
+# categorized.by.MRCA$`OS.time.` <- categorized.by.MRCA$`OS.time.`/365
+# categorized.by.MRCA$`EFS.time` <- categorized.by.MRCA$`EFS.time`/365
+# categorized.by.MRCA$MRCA.time <- factor(categorized.by.MRCA$MRCA.time, levels=c("low", "high"))
 
 categorized.by.MRCA <- survival.information.discovery
 categorized.by.MRCA$`OS.time.` <- categorized.by.MRCA$`OS.time.`/365
@@ -49,6 +70,16 @@ EFS.fit <- survfit(Surv(`EFS.time`, EFS) ~ MRCA.time,
 survdiff(Surv(`EFS.time`, EFS) ~ MRCA.time,
          data = categorized.by.MRCA)
 
+library(survivalROC)
+ROC <- survivalROC(Stime=categorized.by.MRCA$EFS.time, status = categorized.by.MRCA$EFS,
+                    marker = survival.information.discovery[rownames(categorized.by.MRCA),]$MRCA.time,
+                   predict.time = 5,
+                    method="NNE", span=0.1)
+
+plot(ROC$FP, ROC$TP, type="l", xlim=c(0,1), ylim=c(0,1),
+     xlab=paste( "FP", "\n", "AUC = ",round(ROC$AUC,3)),
+     ylab="TP",main="Survival analysis, Method = NNE \n  Year = 5")
+abline(0,1)
 
 ##########################################################################################################################################
 ### Enrichment test
@@ -97,9 +128,28 @@ colnames(survival.information.validation) <- c("OS.time.", "OS", "EFS", "EFS.tim
 survival.information.validation$MRCA.time <- mutation.time.mrca[rownames(survival.information.validation),]$Mean
 survival.information.validation$ECA.time <- mutation.time.eca[rownames(survival.information.validation),]$Mean
 
+## determine the optimal cut point of the MRCA 
+ 
+ MRCA.cutpoint.validation <- surv_cutpoint(
+   survival.information.validation,
+   time = "OS.time.",
+   event = "OS",
+   variables = c("MRCA.time")
+ )
+ summary(MRCA.cutpoint.validation)
 
 ##########################################################################################################################################
-### Categorize the data according to MRCA time
+### Categorize the data accordingly
+
+# categorized.by.MRCA.validation <- surv_categorize(MRCA.cutpoint) 
+# categorized.by.MRCA.validation <- cbind(categorized.by.MRCA.validation, survival.information.validation[rownames(categorized.by.MRCA.validation),
+#                                                                            setdiff(colnames(survival.information.validation),
+#                                                                                    c("OS.time.", "OS", "MRCA.time"))])
+# 
+# 
+# categorized.by.MRCA.validation$`OS.time.` <- categorized.by.MRCA.validation$`OS.time.`/365
+# categorized.by.MRCA.validation$`EFS.time` <- categorized.by.MRCA.validation$`EFS.time`/365
+# categorized.by.MRCA.validation$MRCA.time <- factor(categorized.by.MRCA.validation$MRCA.time, levels=c("low", "high"))
 
 categorized.by.MRCA.validation <- survival.information.validation
 categorized.by.MRCA.validation$`OS.time.` <- categorized.by.MRCA.validation$`OS.time.`/365
@@ -119,11 +169,22 @@ EFS.fit.validation <- survfit(Surv(`EFS.time`, EFS) ~ MRCA.time,
 survdiff(Surv(`EFS.time`, EFS) ~ MRCA.time,
          data = categorized.by.MRCA.validation)
 
+ROC <- survivalROC(Stime=categorized.by.MRCA.validation$EFS.time, status = categorized.by.MRCA.validation$EFS,
+                   marker = survival.information.validation[rownames(categorized.by.MRCA.validation),]$MRCA.time,
+                   predict.time = 5,
+                   method="NNE", span = 0.1)
+
+plot(ROC$FP, ROC$TP, type="l", xlim=c(0,1), ylim=c(0,1),
+     xlab=paste( "FP", "\n", "AUC = ",round(ROC$AUC,3)),
+     ylab="TP",main="Survival analysis, Method = NNE \n  Year = 5")
+abline(0,1)
+
 
 ##########################################################################################################################################
-### Combine the two datasets
+### Add additional tumors to check whether prediction becomes better
 
 survival.information.validation <- sample.information.validation[sample.information.validation$Sample.type %in% c("Primary", "Metastasis"),]
+survival.information.validation$Rounded.ploidy <- survival.information.validation$Rounded.ploidy
 survival.information.validation$MRCA.time <- mutation.time.mrca[rownames(survival.information.validation),]$Mean
 survival.information.validation$ECA.time <- mutation.time.eca[rownames(survival.information.validation),]$Mean
 
@@ -135,15 +196,32 @@ colnames(survival.information.validation)[colnames(survival.information.validati
 
 joined.survival.information <- rbind(survival.information.discovery[, c("OS.time.", "OS", "EFS", "EFS.time", "ECA.exists", "Rounded.ploidy", "Telomere.maintenance.mechanism",
                                                               "17q.gain", "17.gain", "7.gain", "7q.gain", "1.gain", "1q.gain", "1p.deletion", "11q.deletion", "Sex", 
-                                                              "Stage", "Age", "MRCA.time", "NB2004", "MYCN.(current.disease.episode)")], 
+                                                              "Stage", "Age", "MRCA.time", "NB2004", "MYCN.(current.disease.episode)", "RNA_classifier")], 
                                      survival.information.validation[, c("OS.time.", "OS", "EFS", "EFS.time", "ECA.exists", "Rounded.ploidy", "Telomere.maintenance.mechanism",
                                                                          "17q.gain", "17.gain", "7.gain", "7q.gain", "1.gain", "1q.gain", "1p.deletion", "11q.deletion", "Sex", 
-                                                                         "Stage", "Age", "MRCA.time", "NB2004", "MYCN.(current.disease.episode)")])
+                                                                         "Stage", "Age", "MRCA.time", "NB2004", "MYCN.(current.disease.episode)", "RNA_classifier")])
 
+MRCA.cutpoint.joined <- surv_cutpoint(
+  joined.survival.information,
+  time = "OS.time.",
+  event = "OS",
+  variables = c("MRCA.time")
+)
+summary(MRCA.cutpoint.joined)
 
 
 ##########################################################################################################################################
-### Categorize the data according to MRCA time
+### Categorize the data accordingly
+
+# joined.categorized.by.MRCA <- surv_categorize(MRCA.cutpoint) 
+# joined.categorized.by.MRCA <- cbind(joined.categorized.by.MRCA, joined.survival.information[rownames(joined.categorized.by.MRCA),
+#                                                                        setdiff(colnames(joined.survival.information),
+#                                                                                c("OS.time.", "OS", "MRCA.time"))])
+# 
+# 
+# joined.categorized.by.MRCA$`OS.time.` <- joined.categorized.by.MRCA$`OS.time.`/365
+# joined.categorized.by.MRCA$`EFS.time` <- joined.categorized.by.MRCA$`EFS.time`/365
+# joined.categorized.by.MRCA$MRCA.time <- factor(joined.categorized.by.MRCA$MRCA.time, levels=c("low", "high"))
 
 joined.categorized.by.MRCA <- joined.survival.information
 joined.categorized.by.MRCA$`OS.time.` <- joined.categorized.by.MRCA$`OS.time.`/365
@@ -170,7 +248,78 @@ survdiff(Surv(`EFS.time`, EFS) ~ MRCA.time,
          data = joined.categorized.by.MRCA)
 
 ##################################################################################################
+## re-definition of discovery cohort? subset on the cases with discovery coverage
+joined.categorized.by.MRCA$Cohort <- sapply(rownames(joined.categorized.by.MRCA), function(x){
+  if(substr(x, 1, 5)=="XI003" | substr(x, 1, 4)=="K09R"){
+    "Discovery"
+  }else{
+    "Validation"
+  }
+})
 
+discovery.os.fit <- survfit(Surv(`OS.time.`, OS) ~ MRCA.time,
+                               data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery",])
+
+discovery.efs <- survfit(Surv(`EFS.time`, EFS) ~ MRCA.time,
+                          data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery",])
+
+ggsurvplot(discovery.os.fit, data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery",], risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+ggsurvplot(discovery.efs, data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery",], risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+## exclude chemotherapies
+joined.categorized.by.MRCA$Chemo <- sapply(rownames(joined.categorized.by.MRCA), function(x){
+  if(!x %in% rownames(sample.information.discovery)){return(F)}
+  if(sample.information.discovery[x,]$Disease.period == "post chemo - primary tumor site"){
+    return(T)
+  }else{return(F)}
+})
+  
+discovery.no.chemo.os.fit <- survfit(Surv(`OS.time.`, OS) ~ MRCA.time,
+                            data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery" &
+                                                                joined.categorized.by.MRCA$Chemo==F,])
+
+discovery.no.chemo.efs <- survfit(Surv(`EFS.time`, EFS) ~ MRCA.time,
+                         data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery" &
+                                                             joined.categorized.by.MRCA$Chemo==F,])
+
+ggsurvplot(discovery.no.chemo.os.fit, data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery" &
+                                                                 joined.categorized.by.MRCA$Chemo==F,], risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+ggsurvplot(discovery.no.chemo.efs, data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Discovery" &
+                                                              joined.categorized.by.MRCA$Chemo==F,], risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+
+
+validation.os.fit <- survfit(Surv(`OS.time.`, OS) ~ MRCA.time,
+                            data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Validation",])
+
+validation.efs <- survfit(Surv(`EFS.time`, EFS) ~ MRCA.time,
+                         data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Validation",])
+
+ggsurvplot(validation.os.fit, data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Validation",], risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+ggsurvplot(validation.efs, data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$Cohort=="Validation",], risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+
+
+ROC <- survivalROC(Stime=joined.categorized.by.MRCA$EFS.time, status = joined.categorized.by.MRCA$EFS,
+                   marker = joined.survival.information[rownames(joined.categorized.by.MRCA),]$MRCA.time,
+                   predict.time = 5,
+                   method="NNE", span = 0.1)
+
+pdf(paste0(output.directory, "ROC.pdf"))
+plot(ROC$FP, ROC$TP, type="l", xlim=c(0,1), ylim=c(0,1),
+     xlab=paste( "FP", "\n", "AUC = ",round(ROC$AUC,3)),
+     ylab="TP",main="Survival analysis, Method = NNE \n  Year = 5")
+abline(0,1)
+dev.off()
 
 joined.categorized.by.MRCA$TMM.binary <- ifelse(joined.categorized.by.MRCA$Telomere.maintenance.mechanism == "None", "no TMM", "TMM")
 joined.categorized.by.MRCA$MRCA <- c(survival.information.discovery$MRCA.time, survival.information.validation$MRCA.time)/3.3/10^3
@@ -193,8 +342,33 @@ for(i in 1:nrow(joined.p.value.table)){
   
 }
 
+
 ##########################################################################################################################################
-# Fit a Cox proportional hazards model
+# Fit a Cox proportional hazards model - to this end, also compare with RAS mutations
+
+### Comparison with mutations in RAS genes
+source(paste0(custom.script.directory, "Driver_mutations.R"))
+
+ras.p53_genes <- c("NRAS", "HRAS", "KRAS", "ALK", "FGFR1", "NF1", "BRAF", 
+                   "CCND1", "CDK4", "LIN28B", "PTPN11", "ERK", "MEK",
+                   "MDM2", "MDM4", "CDKN2A",  "CREBBP", "TP53",
+                   "ATM", "CDKN1A", "PUMA")
+
+
+joined.categorized.by.MRCA$RAS_p53 <- factor(sapply(rownames(joined.categorized.by.MRCA), function(x){
+  
+  tmp <- filtered.functional.mutations[filtered.functional.mutations$SAMPLE==x,,drop=F]$GENE
+  tmp <- c(tmp, amplifications[amplifications$Sample==x,]$gene,
+           deletions[deletions$Sample==x,]$gene)
+  if(length(tmp)==0){return(F)}
+  
+  if(any(tmp %in% ras.p53_genes)){
+    return(T)
+  }else{
+    return(F)
+  }
+}), levels=c(F, T))
+
 
 joined.categorized.by.MRCA$ECA.exists <- as.character(as.logical(joined.categorized.by.MRCA$ECA.exists))
 joined.categorized.by.MRCA$NB2004.binary <- replace(joined.categorized.by.MRCA$NB2004, joined.categorized.by.MRCA$NB2004 %in% c("MRG", "observation"),
@@ -205,7 +379,7 @@ joined.categorized.by.MRCA$TMM.binary <- factor(joined.categorized.by.MRCA$TMM.b
 joined.categorized.by.MRCA$`MYCN.(current.disease.episode)` <- factor(joined.categorized.by.MRCA$`MYCN.(current.disease.episode)`,
                                                                       levels=c("normal", "amp"))
 ## I. univariate Cox regression
-covariates <- c("MRCA.time", "TMM.binary", "NB2004.binary")
+covariates <- c("MRCA.time", "TMM.binary", "NB2004.binary", "RAS_p53")
 
 univ_formulas <- sapply(covariates,
                         function(x) as.formula(paste('Surv(joined.categorized.by.MRCA$`OS.time.`, joined.categorized.by.MRCA$OS)~', x)))
@@ -255,22 +429,90 @@ for(i in 1:length(univ_models)){
 ggcoxdiagnostics(univ_models[[1]], type = "dfbeta", linear.predictions = F)
 ggcoxdiagnostics(univ_models[[2]], type = "dfbeta", linear.predictions = F)
 ggcoxdiagnostics(univ_models[[3]], type = "dfbeta", linear.predictions = F)
+ggcoxdiagnostics(univ_models[[4]], type = "dfbeta", linear.predictions = F)
 
 ## collinearity of covariates
 
+## add interaction terms to table
+joined.categorized.by.MRCA$NB2004.MRCA.time <- factor(as.numeric(joined.categorized.by.MRCA$NB2004.binary)*
+  as.numeric(joined.categorized.by.MRCA$MRCA.time))
+
+joined.categorized.by.MRCA$NB2004.TMM <- factor(as.numeric(joined.categorized.by.MRCA$NB2004.binary)*
+  as.numeric(joined.categorized.by.MRCA$TMM.binary))
+
+joined.categorized.by.MRCA$TMM.MRCA.time <- factor(as.numeric(joined.categorized.by.MRCA$TMM.binary)*
+  as.numeric(joined.categorized.by.MRCA$MRCA.time))
 
 surv_object <- Surv(time=joined.categorized.by.MRCA$`OS.time.`, event=joined.categorized.by.MRCA$OS) 
 
+## start with strongest effect: MRCA-time has HR of 25
+fit.coxph <- coxph(surv_object ~ MRCA.time , 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+## 0.65 concordance
+fit.coxph <- coxph(surv_object ~ MRCA.time + NB2004.binary, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
 
-fit.coxph <- coxph(surv_object ~ MRCA.time + TMM.binary + NB2004 , 
+## 0.72 concordance
+fit.coxph <- coxph(surv_object ~ MRCA.time + TMM.binary, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.69 concordance
+fit.coxph <- coxph(surv_object ~ MRCA.time + NB2004.binary + TMM.binary, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.726 concordance
+
+fit.coxph <- coxph(surv_object ~ MRCA.time + TMM.binary + NB2004 + RAS_p53 , 
                    data = joined.categorized.by.MRCA)
 
+cox.zph(fit.coxph)
 summary(fit.coxph)
+## 0.75 concordance
 
+## at a cutoff of 0.05 all models conform to the proportional hazard condition
 
 surv_object <- Surv(time=joined.categorized.by.MRCA$`EFS.time`, event=joined.categorized.by.MRCA$EFS) 
 
-fit.coxph.efs <- coxph(surv_object ~ MRCA.time + TMM.binary + NB2004 , 
+fit.coxph.efs <- coxph(surv_object ~ MRCA.time + TMM.binary + NB2004 + RAS_p53 , 
                    data = joined.categorized.by.MRCA)
 
+cox.zph(fit.coxph.efs)
+## all p values are > 0.05 and thus the model conforms to the proportional hazard condition
 
+print(ggcoxzph(cox.zph(fit.coxph.efs)))
+
+##########################################################################################################################################
+### Comparison with RNA classifier; only take tumors with all info
+
+joined.categorized.by.MRCA$RNA_classifier <- factor(joined.categorized.by.MRCA$RNA_classifier, levels=c("0", "1"))
+
+## OS
+surv_object_RNA <- Surv(time=joined.categorized.by.MRCA$`OS.time.`[!is.na(joined.categorized.by.MRCA$RNA_classifier)], 
+                        event=joined.categorized.by.MRCA$OS[!is.na(joined.categorized.by.MRCA$RNA_classifier)]) 
+
+fit.coxph_RNA <- coxph(surv_object_RNA ~ MRCA.time + TMM.binary + NB2004 + RNA_classifier, 
+                       data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),])
+
+cox.zph(fit.coxph_RNA)
+## p value for RNA classifier does not conform to proportional hazard condition
+
+print(ggcoxzph(cox.zph(fit.coxph_RNA)))
+
+## EFS
+surv_object_RNA <- Surv(time=joined.categorized.by.MRCA$`EFS.time`[!is.na(joined.categorized.by.MRCA$RNA_classifier)], 
+                        event=joined.categorized.by.MRCA$EFS[!is.na(joined.categorized.by.MRCA$RNA_classifier)]) 
+
+fit.coxph.efs_RNA <- coxph(surv_object_RNA ~ MRCA.time + TMM.binary + NB2004 + RNA_classifier, 
+                   data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),])
+
+cox.zph(fit.coxph.efs_RNA)
+## p value for RNA classifier does not conform to proportional hazard condition
+
+print(ggcoxzph(cox.zph(fit.coxph.efs_RNA)))
