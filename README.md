@@ -47,7 +47,9 @@ This function converts clonal mutation counts into mutation times. In order to c
 
 ### MRCA.ECA.quantification.R
 This function estimates the mutation density at the most recent common ancestor (MRCA) of the respective tumor. In addition, it tests whether there is statistical evidence for an early common ancestor (ECA) preceding the MRCA. The function takes two matrices providing the estimated number of clonal mutations per copy number state and the respective segment lengths stratified by chromosome as input and returns the estimated mutation time at ECA and MRCA together with empirical 95% confidence intervals (obtained by bootstrapping the genomic segments). It, moreover, returns the segments mapping to MRCA, ECA along with segments mapping neither to MRCA nor ECA. The mutation times are given as #SNVs per human genome (3.3x109bp).
-Model_NB.initiation.R This script contains a set of functions to fit a population genetics model of neuroblatoma initiation to the measured densities at ECA and MRCA. 
+
+### Model_NB.initiation.R 
+This script contains a set of functions to fit a population genetics model of neuroblatoma initiation to the measured densities at ECA and MRCA. 
 
 ## Estimate the mutation density at MRCA and ECA for a single example tumor
 Please refer to the tutorial Example/Example_code_mutation_density.pdf and also download the folder "RData"
