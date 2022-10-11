@@ -598,6 +598,7 @@ estimated.mutation.rate.per.day.clock <- estimated.mutation.rate.per.day
 load(paste0(rdata.directory, "Estimated_mutation_rate_per_day.RData"))
 estimated.mutation.rate.per.day.all <- estimated.mutation.rate.per.day
 
+#source(paste0(custom.script.directory, "Input_data_NB_initiation_Clock_like.R"))
 load(paste0(rdata.directory, "Input_data_NB_initiation_clock_like.RData"))
 P.MRCA.clock <- P.MRCA
 P.ECA.clock <- P.ECA
