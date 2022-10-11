@@ -68,6 +68,8 @@ fit.directory.growth <- "./Processed_data/Model_fits_tumor_growth//"
 
 sample.information.discovery <- read.xlsx(paste0(meta.data, "Supplementary Table 1.xlsx"), sheet = "Discovery")
 rownames(sample.information.discovery) <- sample.information.discovery$Tumor_ID
+colnames(sample.information.discovery) <- replace(colnames(sample.information.discovery),
+                                                  colnames(sample.information.discovery)=="Age.(days)", "Age") 
 
 ## classify stage 1, 4S, 2 as low-risk, stage 3 as intermediate risk and stage 4 as high-risk
 sample.information.discovery$ManualScore <- "LR"
