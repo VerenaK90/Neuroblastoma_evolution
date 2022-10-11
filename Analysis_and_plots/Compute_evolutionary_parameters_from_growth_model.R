@@ -60,8 +60,8 @@ for(i in rownames(subset)){
   colnames(division.rate)[ncol(division.rate)] <- i
   
   ## the mutation rate per day is the product of the division rate and the mutation rate
-  mut.per.day <-  division.rate[1]*mutation.rate[1]
-  mut.per.day[2] <- division.rate[1]*mutation.rate[2] + division.rate[2]*mutation.rate[1]
+  mut.per.day <-  division.rate[1,i]*mutation.rate[1]
+  mut.per.day[2] <- division.rate[1,i]*mutation.rate[2] + division.rate[2,i]*mutation.rate[1]
   mutation.rate.per.day <-  cbind(mutation.rate.per.day, mut.per.day)
   
 }
