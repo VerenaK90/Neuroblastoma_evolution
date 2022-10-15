@@ -9,13 +9,13 @@ In the folder Analysis_and_plots you can find custom scripts written to analyze 
 ## Contents
 
 
-[Software requirements](#software-requirements)
-[Example data](#Example-data)
-[Full dataset](#Full-dataset)
-[Description of folders, data and scripts](#Description-of-folders,-data-and-scripts)
-[Estimate the mutation density at MRCA and ECA for a single example tumor](#Estimate-the-mutation-density-at-MRCA-and-ECA-for-a-single-example-tumor)
-[Analyze the data with population genetics models using uploaded input data](#Analyze-the-data-with-population-genetics-models-using-uploaded-input-data)
-[Reproduce full analysis](#Reproduce-full-analysis)
+- [Software requirements](#software-requirements)
+- [Example data](#Example-data)
+- [Full dataset](#Full-dataset)
+- [Description of folders, data and scripts](#Description-of-folders,-data-and-scripts)
+- [Estimate the mutation density at MRCA and ECA for a single example tumor](#Estimate-the-mutation-density-at-MRCA-and-ECA-for-a-single-example-tumor)
+- [Analyze the data with population genetics models using uploaded input data](#Analyze-the-data-with-population-genetics-models-using-uploaded-input-data)
+- [Reproduce full analysis](#Reproduce-full-analysis)
 
 ## Software requirements
 
