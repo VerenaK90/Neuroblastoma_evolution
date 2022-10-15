@@ -8,9 +8,11 @@ In the folder Analysis_and_plots you can find custom scripts written to analyze 
 
 ## Contents
 
-##Software requirements
 
-##[Software requirements](#software-requirements)
+[Software requirements](#software-requirements)
+
+## Software requirements
+
 
 R v4.0.0
 
