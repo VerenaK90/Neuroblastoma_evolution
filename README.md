@@ -2,9 +2,9 @@
 
 This repository contains custom code associated with the manuscript "Genetic origin of neuroblastoma in early fetal development" by Verena Körber et al.
 
-To run the analysis, download the R package NBevolution_0.0.0.9000.tar.gz and install it. Thereafter, either refer to the 2 tutorials provided as pdfs in the folder Example to run parts of the analysis on exemplary data or re-run the entire analysis by following the steps explained below. In order to re-run the full analysis you need to download the entire dataset from Mendeley as well as the supplementary tables from the manuscript.
+To run the analysis, download the R package [NBevolution](NBevolution_0.0.0.9000.tar.gz) and install it. Thereafter, either refer to the 2 tutorials provided as pdfs in the folder Example to run parts of the analysis on exemplary data or re-run the entire analysis by following the steps explained below. In order to re-run the full analysis you need to download the entire dataset from Mendeley as well as the supplementary tables from the manuscript.
 
-In the folder Analysis_and_plots you can find custom scripts written to analyze the data with the functions provided in the R package "NBevolution" as well as scripts used for plotting. Associated example data (copy number information and SNVs) is provided in the folder [Example_data](Example/Example_data). 
+In the folder [Analysis_and_plots](Analysis_and_plots) you can find custom scripts written to analyze the data with the functions provided in the R package "NBevolution" as well as scripts used for plotting. Associated example data (copy number information and SNVs) is provided in the folder [Example_data](Example/Example_data). 
 
 ## Contents
 
