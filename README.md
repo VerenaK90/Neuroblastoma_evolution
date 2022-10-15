@@ -64,7 +64,7 @@ This function estimates the mutation density at the most recent common ancestor 
 This script contains a set of functions to fit a population genetics model of neuroblatoma initiation to the measured densities at ECA and MRCA. 
 
 ## Estimate the mutation density at MRCA and ECA for a single example tumor
-Please refer to the tutorial https://github.com/hoefer-lab/Neuroblastoma_evolution/Example/Example_code_mutation_density.pdf and also download the folder https://github.com/hoefer-lab/Neuroblastoma_evolution/RData.
+Please refer to the tutorial [Example code mutation density](Example/Example_code_mutation_density.pdf) and also download the folder https://github.com/hoefer-lab/Neuroblastoma_evolution/RData.
 
 ## Analyze the data with population genetics models using uploaded input data
 Please refer to the tutorial https://github.com/hoefer-lab/Neuroblastoma_evolution/Example/Dynamics_of_neuroblastoma_initiation.pdf and also download the folder https://github.com/hoefer-lab/Neuroblastoma_evolution/RData.
