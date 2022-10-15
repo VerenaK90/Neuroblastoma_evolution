@@ -64,17 +64,17 @@ This function estimates the mutation density at the most recent common ancestor 
 This script contains a set of functions to fit a population genetics model of neuroblatoma initiation to the measured densities at ECA and MRCA. 
 
 ## Estimate the mutation density at MRCA and ECA for a single example tumor
-Please refer to the tutorial [Example code mutation density](Example/Example_code_mutation_density.pdf) and also download the folder https://github.com/hoefer-lab/Neuroblastoma_evolution/RData.
+Please refer to the tutorial [Example code mutation density](Example/Example_code_mutation_density.pdf) and also download the folder [RData](RData).
 
 ## Analyze the data with population genetics models using uploaded input data
-Please refer to the tutorial https://github.com/hoefer-lab/Neuroblastoma_evolution/Example/Dynamics_of_neuroblastoma_initiation.pdf and also download the folder https://github.com/hoefer-lab/Neuroblastoma_evolution/RData.
+Please refer to the tutorial [Dynamics of neuroblastoma initiation](Example/Dynamics_of_neuroblastoma_initiation.pdf) and also download the folder [RData](RData).
 
 ## Reproduce full analysis
 To reproduce the analysis do the following steps:
 
-- Download the example data set from the folder https://github.com/hoefer-lab/Neuroblastoma_evolution/Example_data or the full data set from Mendeley (link will be provided upon publication) and store the files on your system. Each tumor contains four subfolders named “ACEseq” (containing the copy number estimates), “SNVs” (containing the vcf-file for somatic snvs), "Indels" (containing the vcf-file for somatic indels) and "SVs" (containing the vcf files for somatic SVs). On Mendeley, we also stored modeling results and signatures. In addition, you will need the information from Supplementary Table 1 (containing meta data of the samples). 
-- Install the package https://github.com/hoefer-lab/Neuroblastoma_evolution/NBevolution_0.0.0.9000.tar.gz and download the folders https://github.com/hoefer-lab/Neuroblastoma_evolution/Analysis_and_plots and github.com/hoefer-lab/Neuroblastoma_evolution/Meta_data.
-- Open the file https://github.com/hoefer-lab/Neuroblastoma_evolution/Analysis_and_plots/Settings.R and perform the following steps. 
+- Download the example data set from the folder [Example_data](Example_data) or the full data set from Mendeley (link will be provided upon publication) and store the files on your system. Each tumor contains four subfolders named “ACEseq” (containing the copy number estimates), “SNVs” (containing the vcf-file for somatic snvs), "Indels" (containing the vcf-file for somatic indels) and "SVs" (containing the vcf files for somatic SVs). On Mendeley, we also stored modeling results and signatures. In addition, you will need the information from Supplementary Table 1 (containing meta data of the samples). 
+- Install the package [NBevolution](NBevolution_0.0.0.9000.tar.gz) and download the folders [Analysis_and_plots](Analysis_and_plots) and [Meta_data](Meta_data).
+- Open the file [Settings.R](Analysis_and_plots/Settings.R) and perform the following steps. 
 -	Install the libraries as given in the top section of the file Settings.R. 
 -	Moreover, set the directories correctly (second section). 
 -	Define the directories under which the data of the discovery set (data.directory.discovery) and the validation set (data.directory.validation) are stored. These directories contain one folder for each tumor of the set (e.g., Example_tumor_1).
