@@ -10,6 +10,12 @@ In the folder Analysis_and_plots you can find custom scripts written to analyze 
 
 
 [Software requirements](#software-requirements)
+[Example data](#Example-data)
+[Full dataset](#Full-dataset)
+[Description of folders, data and scripts](#Description-of-folders,-data-and-scripts)
+[Estimate the mutation density at MRCA and ECA for a single example tumor](#Estimate-the-mutation-density-at-MRCA-and-ECA-for-a-single-example-tumor)
+[Analyze the data with population genetics models using uploaded input data](#Analyze-the-data-with-population-genetics-models-using-uploaded-input-data)
+[Reproduce full analysis](#Reproduce-full-analysis)
 
 ## Software requirements
 
@@ -63,7 +69,7 @@ Please refer to the tutorial Example/Example_code_mutation_density.pdf and also 
 ## Analyze the data with population genetics models using uploaded input data
 Please refer to the tutorial Example/Dynamics_of_neuroblastoma_initiation.pdf and also download the folder "RData"
 
-## Analysis
+## Reproduce full analysis
 To reproduce the analysis do the following steps:
 
 - Download the example data set from the folder Example_data or the full data set from Mendeley (link will be provided upon publication) and store the files on your system. Each tumor contains four subfolders named “ACEseq” (containing the copy number estimates), “SNVs” (containing the vcf-file for somatic snvs), "Indels" (containing the vcf-file for somatic indels) and "SVs" (containing the vcf files for somatic SVs). On Mendeley, we also stored modeling results and signatures. In addition, you will need the information from Supplementary Table 1 (containing meta data of the samples). 
