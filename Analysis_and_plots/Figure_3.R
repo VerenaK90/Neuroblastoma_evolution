@@ -9,6 +9,7 @@ load(paste0(rdata.directory, "MRCA_timing.RData"))
 #load(paste0(rdata.directory, "Estimated_mutation_rate_per_day.RData"))
 load(paste0(rdata.directory, "Sig_colors.RData"))
 load(paste0(rdata.directory, "Clock_like_SBS.RData"))
+load(paste0(rdata.directory, "Clonal_mutations_different_CNs.RData"))
 
 ## source data:
 wb <- createWorkbook()
