@@ -36,8 +36,7 @@ library(NBevolution)
 
 ##############################################################################################################################################
 ## set directories
-data.directory.discovery <- "./Data/discovery/"
-
+data.directory.discovery <- "./"
 snv.directory <- "SNVs/"
 indel.directory <- "Indels/"
 sv.directory <- "SVs/"
@@ -81,6 +80,12 @@ sample.information.discovery$Stage[sample.information.discovery$Stage %in% c("2.
 ## in rare cases, gains were timed <ECA or between ECA and MRCA; replae <ECA with ECA and ECA<x<MRCA with ECA/MRCA, as we don't distinguish this level for plotting
 sample.information.discovery <- replace(sample.information.discovery, sample.information.discovery=="before ECA", "ECA")
 sample.information.discovery <- replace(sample.information.discovery, sample.information.discovery=="between ECA and MRCA", "ECA/MRCA")
+
+
+sample.information.discovery$Telomere.maintenance.mechanism <- replace(sample.information.discovery$Telomere.maintenance.mechanism,
+                                                                       sample.information.discovery$Telomere.maintenance.mechanism %in%c("Multiple (MNA + TERT)",
+                                                                                                                                         "Multiple (MNA + ALT", "Multiple"))
+
 
 tumors.discovery <- sample.information.discovery$ID
 
