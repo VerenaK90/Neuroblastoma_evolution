@@ -131,17 +131,18 @@ writeData(wb, "d", to.store)
 
 pdf(paste0(panel.directory, "Figure_6d.pdf"), width=5, height=3)
 
+## add time of first trimester
 print(ggplot(to.plot.eca, aes(x=x, y = data, ymin = data-sd, ymax = data +sd, col=Event, fill=Event)) + geom_step() + geom_errorbar()+
         geom_stepribbon(aes(x=x, ymin = lower, ymax = upper), alpha=0.5)  +
         scale_fill_manual(values=manual.colors) + scale_color_manual(values=manual.colors) + 
-        scale_x_continuous(name="#SSNVs/Mb", limits=c(0, max(to.plot$x)), 
+        scale_x_continuous(name="#SSNVs/Mb", limits=c(0, max(to.plot.eca$x)), 
                            sec.axis = sec_axis(~. *3.3*10^3*2/7/estimated.mutation.rate.per.day[2] + 2, name="Estimated weeks p.c.")) + 
         scale_y_continuous(name = "% Neuroblastoma cases") +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
               panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-        geom_vline(xintercept = estimated.mutation.rate.per.day[2]*(38-2)*7/2/3.3/10^3, col="grey") +
-        geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(38-2)*7/2/3.3/10^3, 
-                                  xmax = estimated.mutation.rate.per.day[3]*(38-2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
+        geom_vline(xintercept = estimated.mutation.rate.per.day[2]*(12-2)*7/2/3.3/10^3, col="grey") +
+        geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(12-2)*7/2/3.3/10^3, 
+                                  xmax = estimated.mutation.rate.per.day[3]*(12-2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
                   aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
                   inherit.aes = F))
 dev.off()
@@ -353,15 +354,18 @@ writeData(wb, "f", to.store)
 
 pdf(paste0(panel.directory, "Figure_6f.pdf"), width=7, height=7, useDingbats = F)
 
+## mark theend of the first trimester
 ggplot(N.sim.cells, aes(x=t, ymin=ymin, ymax=ymax)) + geom_ribbon(fill="grey") + 
-  geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(38+2)*7/2/3.3/10^3, 
-                            xmax = estimated.mutation.rate.per.day[3]*(38+2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
+  geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(12-2)*7/2/3.3/10^3, 
+                            xmax = estimated.mutation.rate.per.day[3]*(12-2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
             aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
             inherit.aes = F) + 
-  geom_vline(xintercept = estimated.mutation.rate.per.day[2]*(38+2)*7/2/3.3/10^3, col="grey") +
+  geom_vline(xintercept = estimated.mutation.rate.per.day[2]*(12-2)*7/2/3.3/10^3, col="grey") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) +
-  scale_x_continuous(name="Cell count", sec.axis = sec_axis(~. *3.3*10^3*2/7/estimated.mutation.rate.per.day[2] + 2, name="Estimated weeks p.c.")) 
+  scale_x_continuous(name="# SSNVs/Mb", limits=c(0, max(to.plot.eca$x)),
+                     sec.axis = sec_axis(~. *3.3*10^3*2/7/estimated.mutation.rate.per.day[2] + 2, name="Estimated weeks p.c.")) +
+  scale_y_continuous(name="Cell count")
 
 
 dev.off()
@@ -416,11 +420,11 @@ pdf(paste0(panel.directory, "Figure_S5b.pdf"), width=7, height=7, useDingbats = 
 
 p <- ggplot(M1, aes(x=t, ymin=`2.5%`, ymax=`97.5%`)) + geom_ribbon(fill="darkgreen") + 
   geom_ribbon(data=N.sim.cells, aes(x=t, ymin=ymin, ymax=ymax), fill="grey")+
-  geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(38+2)*7/2/3.3/10^3, 
-                            xmax = estimated.mutation.rate.per.day[3]*(38+2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
+  geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(38-2)*7/2/3.3/10^3, 
+                            xmax = estimated.mutation.rate.per.day[3]*(38-2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
             aes(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax),
             inherit.aes = F) + 
-  geom_vline(xintercept = estimated.mutation.rate.per.day[2]*(38+2)*7/2/3.3/10^3, col="grey") +
+  geom_vline(xintercept = estimated.mutation.rate.per.day[2]*(38-2)*7/2/3.3/10^3, col="grey") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) +
   scale_x_continuous(name="Cell count", sec.axis = sec_axis(~. *3.3*10^3*2/7/estimated.mutation.rate.per.day[2] + 2, name="Estimated weeks p.c.")) 
