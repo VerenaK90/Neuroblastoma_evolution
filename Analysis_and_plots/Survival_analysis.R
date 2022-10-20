@@ -237,7 +237,7 @@ joined.categorized.by.MRCA$TMM.binary <- factor(joined.categorized.by.MRCA$TMM.b
 joined.categorized.by.MRCA$`MYCN.(current.disease.episode)` <- factor(joined.categorized.by.MRCA$`MYCN.(current.disease.episode)`,
                                                                       levels=c("normal", "amp"))
 ## I. univariate Cox regression
-covariates <- c("MRCA.time", "TMM.binary", "NB2004.binary", "RAS_p53")
+covariates <- c("MRCA.time", "TMM.binary", "Stage.binary", "Age.binary", "RAS_p53")
 
 univ_formulas <- sapply(covariates,
                         function(x) as.formula(paste('Surv(joined.categorized.by.MRCA$`OS.time.`, joined.categorized.by.MRCA$OS)~', x)))
@@ -270,7 +270,7 @@ as.data.frame(res)
 ## - proportional hazards: ratio of hazard should be constant over time between groups
 
 lapply(univ_models, cox.zph)
-## non significant for any of the covariates; thus the assumption holds.
+
 for(i in 1:length(univ_models)){
   test.ph <- cox.zph(univ_models[[i]])
   print(ggcoxzph(test.ph))
@@ -288,6 +288,7 @@ ggcoxdiagnostics(univ_models[[1]], type = "dfbeta", linear.predictions = F)
 ggcoxdiagnostics(univ_models[[2]], type = "dfbeta", linear.predictions = F)
 ggcoxdiagnostics(univ_models[[3]], type = "dfbeta", linear.predictions = F)
 ggcoxdiagnostics(univ_models[[4]], type = "dfbeta", linear.predictions = F)
+ggcoxdiagnostics(univ_models[[5]], type = "dfbeta", linear.predictions = F)
 
 ## collinearity of covariates
 
@@ -308,43 +309,98 @@ fit.coxph <- coxph(surv_object ~ MRCA.time ,
                    data = joined.categorized.by.MRCA)
 summary(fit.coxph)
 ## 0.65 concordance
-fit.coxph <- coxph(surv_object ~ MRCA.time + NB2004.binary, 
-                   data = joined.categorized.by.MRCA)
-summary(fit.coxph)
-cox.zph(fit.coxph)
-
-## 0.72 concordance
 fit.coxph <- coxph(surv_object ~ MRCA.time + TMM.binary, 
                    data = joined.categorized.by.MRCA)
 summary(fit.coxph)
 cox.zph(fit.coxph)
 
 ## 0.69 concordance
-fit.coxph <- coxph(surv_object ~ MRCA.time + NB2004.binary + TMM.binary, 
+fit.coxph <- coxph(surv_object ~ MRCA.time + Stage.binary, 
                    data = joined.categorized.by.MRCA)
 summary(fit.coxph)
 cox.zph(fit.coxph)
 
-## 0.726 concordance
+## 0.69 concordance
 
-fit.coxph <- coxph(surv_object ~ MRCA.time + TMM.binary + NB2004 + RAS_p53 , 
+fit.coxph <- coxph(surv_object ~ MRCA.time + Age.binary, 
                    data = joined.categorized.by.MRCA)
-
-cox.zph(fit.coxph)
 summary(fit.coxph)
-## 0.75 concordance
+cox.zph(fit.coxph)
+
+## 0.65 concordance
+
+fit.coxph <- coxph(surv_object ~ MRCA.time + RAS_p53, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.71 concordance
+
+fit.coxph <- coxph(surv_object ~ MRCA.time + TMM.binary + Stage.binary + Age.binary + RAS_p53, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## full model as shown in paper
+fit.coxph_MRCA_TMM_Stage_Age_RAS.OS <- coxph(surv_object ~ MRCA.time + TMM.binary + Stage.binary + Age.binary + RAS_p53, 
+                                             data = joined.categorized.by.MRCA)
+
+cox.zph(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS)
+print(ggcoxzph(cox.zph(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS)))
+
+summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS)
+## 0.74 concordance
 
 ## at a cutoff of 0.05 all models conform to the proportional hazard condition
 
-surv_object <- Surv(time=joined.categorized.by.MRCA$`EFS.time`, event=joined.categorized.by.MRCA$EFS) 
+#########
+## do the same for event-free survival 
+efs.surv_object <- Surv(time=joined.categorized.by.MRCA$`EFS.time`, event=joined.categorized.by.MRCA$EFS) 
 
-fit.coxph.efs <- coxph(surv_object ~ MRCA.time + TMM.binary + NB2004 + RAS_p53 , 
+fit.coxph <- coxph(efs.surv_object ~ MRCA.time , 
                    data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
 
-cox.zph(fit.coxph.efs)
+## 0.65 concordance
+fit.coxph <- coxph(efs.surv_object ~ MRCA.time + TMM.binary, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.69 concordance
+fit.coxph <- coxph(efs.surv_object ~ MRCA.time + Stage.binary, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.66 concordance
+
+fit.coxph <- coxph(efs.surv_object ~ MRCA.time + Age.binary, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.67 concordance
+
+fit.coxph <- coxph(efs.surv_object ~ MRCA.time + RAS_p53, 
+                   data = joined.categorized.by.MRCA)
+summary(fit.coxph)
+cox.zph(fit.coxph)
+
+## 0.69 concordance
+
+fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS <- coxph(efs.surv_object ~ MRCA.time + TMM.binary + Stage.binary + Age.binary + RAS_p53, 
+                                              data = joined.categorized.by.MRCA)
+
+summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS)
+cox.zph(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS)
+print(ggcoxzph(cox.zph(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS)))
+
+## 0.71 concordance 
+
 ## all p values are > 0.05 and thus the model conforms to the proportional hazard condition
 
-print(ggcoxzph(cox.zph(fit.coxph.efs)))
 
 ##########################################################################################################################################
 ### Comparison with RNA classifier; only take tumors with all info
@@ -352,11 +408,11 @@ print(ggcoxzph(cox.zph(fit.coxph.efs)))
 joined.categorized.by.MRCA$RNA_classifier <- factor(joined.categorized.by.MRCA$RNA_classifier, levels=c("0", "1"))
 
 ## OS
-surv_object_RNA <- Surv(time=joined.categorized.by.MRCA$`OS.time.`[joined.categorized.by.MRCA$RNA_classifier!="n.d."], 
-                        event=joined.categorized.by.MRCA$OS[joined.categorized.by.MRCA$RNA_classifier!="n.d."]) 
+surv_object_RNA <- Surv(time=joined.categorized.by.MRCA$`OS.time.`[!is.na(joined.categorized.by.MRCA$RNA_classifier)], 
+                        event=joined.categorized.by.MRCA$OS[!is.na(joined.categorized.by.MRCA$RNA_classifier)]) 
 
-fit.coxph_RNA <- coxph(surv_object_RNA ~ MRCA.time + TMM.binary + NB2004 + RNA_classifier, 
-                       data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$RNA_classifier!="n.d.",])
+fit.coxph_RNA <- coxph(surv_object_RNA ~ MRCA.time + TMM.binary + Stage.binary + Age.binary + RNA_classifier, 
+                       data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),])
 
 cox.zph(fit.coxph_RNA)
 ## p value for RNA classifier does not conform to proportional hazard condition
@@ -364,13 +420,12 @@ cox.zph(fit.coxph_RNA)
 print(ggcoxzph(cox.zph(fit.coxph_RNA)))
 
 ## EFS
-surv_object_RNA <- Surv(time=joined.categorized.by.MRCA$`EFS.time`[joined.categorized.by.MRCA$RNA_classifier!="n.d."], 
-                        event=joined.categorized.by.MRCA$EFS[joined.categorized.by.MRCA$RNA_classifier!="n.d."]) 
+surv_object_RNA <- Surv(time=joined.categorized.by.MRCA$`EFS.time`[!is.na(joined.categorized.by.MRCA$RNA_classifier)], 
+                        event=joined.categorized.by.MRCA$EFS[!is.na(joined.categorized.by.MRCA$RNA_classifier)]) 
 
-fit.coxph.efs_RNA <- coxph(surv_object_RNA ~ MRCA.time + TMM.binary + NB2004 + RNA_classifier, 
-                   data = joined.categorized.by.MRCA[joined.categorized.by.MRCA$RNA_classifier!="n.d.",])
+fit.coxph.efs_RNA <- coxph(surv_object_RNA ~ MRCA.time + TMM.binary + Stage.binary + Age.binary + RNA_classifier, 
+                   data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),])
 
 cox.zph(fit.coxph.efs_RNA)
-## p value for RNA classifier does not conform to proportional hazard condition
 
 print(ggcoxzph(cox.zph(fit.coxph.efs_RNA)))

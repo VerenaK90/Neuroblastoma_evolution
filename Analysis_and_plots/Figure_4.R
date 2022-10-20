@@ -476,11 +476,11 @@ dev.off()
 
 pdf(paste0(panel.directory,"Figure_4j.pdf"), useDingbats = F, width = 4, height=4)
 
-ggforest(fit.coxph.efs, data = joined.categorized.by.MRCA, main = "EFS")
+ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS, data = joined.categorized.by.MRCA, main = "EFS")
 
 dev.off()
 
-chars <- capture.output(summary(fit.coxph.efs))
+chars <- capture.output(summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS))
 
 addWorksheet(wb, "j")
 writeData(wb, sheet = "j", chars)
@@ -488,12 +488,12 @@ writeData(wb, sheet = "j", chars)
 
 pdf(paste0(panel.directory,"Figure_S4a.pdf"), useDingbats = F, width = 4, height=4)
 
-ggforest(fit.coxph, data = joined.categorized.by.MRCA, main="OS")
+ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS, data = joined.categorized.by.MRCA, main="OS")
 
 dev.off()
 
 
-chars <- capture.output(summary(fit.coxph))
+chars <- capture.output(summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS))
 
 addWorksheet(wb.s, "a")
 writeData(wb.s, sheet = "a", chars)
@@ -505,7 +505,7 @@ writeData(wb.s, sheet = "a", chars)
 
 pdf(paste0(panel.directory,"Figure_S4b.pdf"), useDingbats = F, width = 4, height=4)
 
-ggforest(fit.coxph.efs_RNA, data = joined.categorized.by.MRCA, main = "EFS")
+ggforest(fit.coxph.efs_RNA, data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),], main = "EFS")
 
 dev.off()
 
@@ -517,7 +517,7 @@ writeData(wb.s, sheet = "b", chars)
 
 pdf(paste0(panel.directory,"Figure_S4c.pdf"), useDingbats = F, width = 4, height=4)
 
-ggforest(fit.coxph_RNA, data = joined.categorized.by.MRCA, main="OS")
+ggforest(fit.coxph_RNA, data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),], main="OS")
 
 dev.off()
 
