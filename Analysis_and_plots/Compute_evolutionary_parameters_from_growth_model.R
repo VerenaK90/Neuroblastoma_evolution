@@ -37,7 +37,7 @@ for(i in rownames(subset)){
   mutational.burden.at.mrca[2] <- (mutation.time.mrca[i,]$Max - mutation.time.mrca[i,]$Min)/(2*1.96)
   age <- sample.information.discovery[rownames(sample.information.discovery)==i, "Age"]
   
-  n.generations <- mutational.burden.at.mrca*2/mutation.rate[1] + 9*log(10)/(1-delta[1])
+  n.generations <- mutational.burden.at.mrca[1]*2/mutation.rate[1] + 9*log(10)/(1-delta[1])
   n.generations[2] <- 2/mutation.rate[1]*2*mutational.burden.at.mrca[2] +
     mutational.burden.at.mrca[1]*2/mutation.rate[1]^2*mutation.rate[2] + 9*log(10)/(1-delta[1])^2*delta[2]
   
