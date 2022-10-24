@@ -499,33 +499,6 @@ addWorksheet(wb.s, "a")
 writeData(wb.s, sheet = "a", chars)
 
 
-##############################################################################################################################################
-## Figure S4b/c: Cox regression with RNA classifier
-
-
-pdf(paste0(panel.directory,"Figure_S4b.pdf"), useDingbats = F, width = 4, height=4)
-
-ggforest(fit.coxph.efs_RNA, data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),], main = "EFS")
-
-dev.off()
-
-chars <- capture.output(summary(fit.coxph.efs_RNA))
-
-addWorksheet(wb.s, "b")
-writeData(wb.s, sheet = "b", chars)
-
-
-pdf(paste0(panel.directory,"Figure_S4c.pdf"), useDingbats = F, width = 4, height=4)
-
-ggforest(fit.coxph_RNA, data = joined.categorized.by.MRCA[!is.na(joined.categorized.by.MRCA$RNA_classifier),], main="OS")
-
-dev.off()
-
-chars <- capture.output(summary(fit.coxph_RNA))
-
-addWorksheet(wb.s, "c")
-writeData(wb.s, sheet = "c", chars)
-
 ##########################################################################################################################################
 
 saveWorkbook(wb, file = paste0(panel.directory,"Source_data_Fig.4.xlsx"), overwrite=T)
