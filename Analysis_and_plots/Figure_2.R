@@ -159,6 +159,33 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
                                          MRCA.higher = mutation.time.mrca[i,]$Max/3.3/10^3)
       writeData(wb, "f_ECA_MRCA", source.data.eca.mrca)
       
+      p.values <- mrca.eca[[i]]$p.values.mrca
+      p.values$Chromosome <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][2]
+      })
+      p.values$CN  <- sapply(rownames(p.values), function(x){
+        x <- strsplit(x, split="_")[[1]][3]
+        if(x=="monosomic"){
+          1
+        }else if(x=="disomic"){
+          2
+        }else if(x=="trisomic"){
+          3
+        }else if(x=="tetrasomic"){
+          4
+        }
+      })
+      p.values$A  <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][4]
+      })
+      ## restrict to gains
+      p.values <- p.values[p.values$A!="I",c("Chromosome", "CN", "p", "adj.p")]
+      p.values$sig <- ifelse(p.values$adj.p < 0.01, "**", "n.s.")
+      rownames(p.values) <- NULL
+      
+      writeData(wb, sheet = "f_ECA_MRCA", p.values, startCol = ncol(source.data.eca.mrca)+5, rowNames = F)
+      
+      
     }else if(i=="NBE14"){
       panel="c"
       addWorksheet(wb.s3, panel)
@@ -172,6 +199,32 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
                                          MRCA.lower = mutation.time.mrca[i,]$Min/3.3/10^3,
                                          MRCA.higher = mutation.time.mrca[i,]$Max/3.3/10^3)
       writeData(wb.s3, "c_ECA_MRCA", source.data.eca.mrca)
+      
+      p.values <- mrca.eca[[i]]$p.values.mrca
+      p.values$Chromosome <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][2]
+      })
+      p.values$CN  <- sapply(rownames(p.values), function(x){
+        x <- strsplit(x, split="_")[[1]][3]
+        if(x=="monosomic"){
+          1
+        }else if(x=="disomic"){
+          2
+        }else if(x=="trisomic"){
+          3
+        }else if(x=="tetrasomic"){
+          4
+        }
+      })
+      p.values$A  <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][4]
+      })
+      ## restrict to gains
+      p.values <- p.values[p.values$A!="I",c("Chromosome", "CN", "p", "adj.p")]
+      p.values$sig <- ifelse(p.values$adj.p < 0.01, "**", "n.s.")
+      rownames(p.values) <- NULL
+      
+      writeData(wb.s3, sheet = "c_ECA_MRCA", p.values, startCol = ncol(source.data.eca.mrca)+5, rowNames = F)
     }else if(i=="NBE99"){
       panel="a"
       addWorksheet(wb.s3, panel)
@@ -185,6 +238,32 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
                                          MRCA.lower = mutation.time.mrca[i,]$Min/3.3/10^3,
                                          MRCA.higher = mutation.time.mrca[i,]$Max/3.3/10^3)
       writeData(wb.s3, "a_ECA_MRCA", source.data.eca.mrca)
+      
+      p.values <- mrca.eca[[i]]$p.values.mrca
+      p.values$Chromosome <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][2]
+      })
+      p.values$CN  <- sapply(rownames(p.values), function(x){
+        x <- strsplit(x, split="_")[[1]][3]
+        if(x=="monosomic"){
+          1
+        }else if(x=="disomic"){
+          2
+        }else if(x=="trisomic"){
+          3
+        }else if(x=="tetrasomic"){
+          4
+        }
+      })
+      p.values$A  <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][4]
+      })
+      ## restrict to gains
+      p.values <- p.values[p.values$A!="I",c("Chromosome", "CN", "p", "adj.p")]
+      p.values$sig <- ifelse(p.values$adj.p < 0.01, "**", "n.s.")
+      rownames(p.values) <- NULL
+      
+      writeData(wb.s3, sheet = "a_ECA_MRCA", p.values, startCol = ncol(source.data.eca.mrca)+5, rowNames = F)
     }else{
       panel="d"
       addWorksheet(wb.s3, panel)
@@ -198,6 +277,32 @@ for(i in c("NBE15", "NBE14", "NBE44", "NBE99")){
                                          MRCA.lower = mutation.time.mrca[i,]$Min/3.3/10^3,
                                          MRCA.higher = mutation.time.mrca[i,]$Max/3.3/10^3)
       writeData(wb.s3, "d_ECA_MRCA", source.data.eca.mrca)
+      
+      p.values <- mrca.eca[[i]]$p.values.mrca
+      p.values$Chromosome <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][2]
+      })
+      p.values$CN  <- sapply(rownames(p.values), function(x){
+        x <- strsplit(x, split="_")[[1]][3]
+        if(x=="monosomic"){
+          1
+        }else if(x=="disomic"){
+          2
+        }else if(x=="trisomic"){
+          3
+        }else if(x=="tetrasomic"){
+          4
+        }
+      })
+      p.values$A  <- sapply(rownames(p.values), function(x){
+        strsplit(x, split="_")[[1]][4]
+      })
+      ## restrict to gains
+      p.values <- p.values[p.values$A!="I",c("Chromosome", "CN", "p", "adj.p")]
+      p.values$sig <- ifelse(p.values$adj.p < 0.01, "**", "n.s.")
+      rownames(p.values) <- NULL
+      
+      writeData(wb.s3, sheet = "d_ECA_MRCA", p.values, startCol = ncol(source.data.eca.mrca)+5, rowNames = F)
     }
     
 

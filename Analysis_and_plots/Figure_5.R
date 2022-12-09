@@ -34,7 +34,7 @@ writeData(wb, "5a", to.plot)
 pdf(paste0(panel.directory,"Figure_5a.pdf"), useDingbats = F)
 
 ggplot(to.plot, aes(y=odds.ratio, ymin=odds.ratio.l, ymax=odds.ratio.u, x=Parameter)) + coord_flip() + 
-  geom_pointrange() + geom_hline(yintercept = 1, linetype=2) + scale_y_log10()
+  geom_pointrange() + geom_hline(yintercept = 1, linetype=2) + scale_y_log10() + annotation_logticks(sides = "b")
 
 dev.off()
 
@@ -43,30 +43,17 @@ dev.off()
 
 pdf(paste0(panel.directory,"Figure_5b.pdf"), useDingbats = F)
 
-to.plot <- joined.categorized.by.MRCA[joined.categorized.by.MRCA$MRCA.time=="low",]
+to.plot <- joined.categorized.by.MRCA[,c("MRCA.time", "Telomere.maintenance.mechanism")]
 
-to.plot <- to.plot %>% group_by(`Telomere.maintenance.mechanism`) %>% count(`Telomere.maintenance.mechanism`)
+to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism,
+                                                 levels = c("MNA", "ALT", "TERT", "Multiple", "None"))
 
-addWorksheet(wb, "b_early_MRCA")
-writeData(wb, "b_early_MRCA", to.plot)
+addWorksheet(wb, "b")
+writeData(wb, "b", to.plot, rowNames = F)
 
-
-ggplot(to.plot, aes(x="", y=n, fill=Telomere.maintenance.mechanism)) +
-  geom_col( width=1) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=telomere.colors) + ggtitle("Early MRCA")
-
-to.plot <- joined.categorized.by.MRCA[joined.categorized.by.MRCA$MRCA.time=="high",]
-
-to.plot <- to.plot %>% group_by(`Telomere.maintenance.mechanism`) %>% count(`Telomere.maintenance.mechanism`)
-
-addWorksheet(wb, "b_late_MRCA")
-writeData(wb, "b_late_MRCA", to.plot)
-
-ggplot(to.plot, aes(x="", y=n, fill=Telomere.maintenance.mechanism)) +
-  geom_col( width=1) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=telomere.colors) + ggtitle("Late MRCA")
+ggplot(to.plot, aes(x=MRCA.time, fill=Telomere.maintenance.mechanism)) +
+  geom_bar(position = position_dodge2(preserve = "single")) +
+  scale_fill_manual(values=telomere.colors)  + scale_y_continuous(name="# Tumors")
 
 dev.off()
 

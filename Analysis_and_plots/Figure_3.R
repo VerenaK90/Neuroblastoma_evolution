@@ -9,7 +9,6 @@ load(paste0(rdata.directory, "MRCA_timing.RData"))
 #load(paste0(rdata.directory, "Estimated_mutation_rate_per_day.RData"))
 load(paste0(rdata.directory, "Sig_colors.RData"))
 load(paste0(rdata.directory, "Clock_like_SBS.RData"))
-load(paste0(rdata.directory, "Clonal_mutations_different_CNs.RData"))
 
 ## source data:
 wb <- createWorkbook()
@@ -64,17 +63,14 @@ to.plot <- melt(clonal.sigs.discovery, value.name = "Exposure", id.vars = c("Sam
                 variable.name = "Signature")
 to.plot$Signature <- factor(to.plot$Signature, levels = c("Clock", setdiff(unique(to.plot$Signature), "Clock")))
 
-p1 <- ggplot(to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations"),], aes(x=Signature, y=Exposure)) + 
-  geom_bar(stat="summary") + geom_errorbar(stat = "summary") + facet_wrap(~MRCA.time + Diagnosis)
+p1 <- ggplot(to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations") &
+                       to.plot$Diagnosis=="Primary",], aes(x=Signature, y=Exposure)) + 
+  geom_bar(stat="summary") + geom_errorbar(stat = "summary") + facet_wrap(~MRCA.time, nrow=2)+
+  geom_jitter( width=0.2, height = 0)
 
-to.store <- to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations"),]
-to.store$Sample <- sapply(to.store$Sample, function(x){
-  if(x %in% tumors.discovery){
-    sample.information.discovery[x,]$Evolution_paper_Id
-  }else{
-    sample.information.validation[x,]$Evolution_paper_ID
-  }
-})
+to.store <- to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations") &
+                      to.plot$Diagnosis=="Primary",]
+
 
 addWorksheet(wb.s2, "d")
 writeData(wb.s2, "d", to.store)
@@ -90,26 +86,25 @@ to.plot <- melt(subclonal.sigs.discovery, value.name = "Exposure", id.vars = c("
                 variable.name = "Signature")
 to.plot$Signature <- factor(to.plot$Signature, levels = c("Clock", setdiff(unique(to.plot$Signature), "Clock")))
 
-p2 <- ggplot(to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations"),], aes(x=Signature, y=Exposure)) + 
-  geom_bar(stat="summary") + geom_errorbar(stat = "summary") + facet_wrap(~MRCA.time + Diagnosis)
+p2 <- ggplot(to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations")  &
+                       to.plot$Diagnosis=="Primary",], aes(x=Signature, y=Exposure)) + 
+  geom_bar(stat="summary") + geom_errorbar(stat = "summary") + facet_wrap(~MRCA.time, nrow=2)+
+  geom_jitter( width=0.2, height = 0)
 
 
 pdf(paste0(panel.directory, "Figure_S2d_e.pdf"), width=3.5, height=3.5, useDingbats = F)
 
-p1 + ggtitle("Clonal")
+p1 <- p1 + ggtitle("Clonal")
 
-p2 + ggtitle("Subclonal")
+p2 <- p2 + ggtitle("Subclonal")
+
+ggarrange(p1, p2, ncol=2)
 
 dev.off()
 
-to.store <- to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations"),]
-to.store$Sample <- sapply(to.store$Sample, function(x){
-  if(x %in% tumors.discovery){
-    sample.information.discovery[x,]$Evolution_paper_Id
-  }else{
-    sample.information.validation[x,]$Evolution_paper_ID
-  }
-})
+to.store <- to.plot[!to.plot$Signature %in% c("SBS1", "SBS5", "SBS40", "mutations")&
+                      to.plot$Diagnosis=="Primary",]
+
 
 addWorksheet(wb.s2, "e")
 writeData(wb.s2, "e", to.store)
@@ -413,7 +408,7 @@ dev.off()
 
 
 ##########################################################################################################################################
-## Figure S33: Compare MRCA between cases with and without ECA among late-MRCA tumors
+## Figure S3e: Compare MRCA between cases with and without ECA among late-MRCA tumors
 
 pdf(paste0(panel.directory,"Figure_S3e.pdf"), useDingbats = F)
 

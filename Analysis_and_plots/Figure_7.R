@@ -457,14 +457,13 @@ writeData(wb, "f", to.plot)
 pdf(paste0(panel.directory, "Figure_7f.pdf"), width = 5, height=4)
 
 p <- ggplot(to.plot, aes(x=Subtype, y=mu.eff.mean)) + 
-  geom_boxplot()+ 
+  geom_boxplot()+ geom_beeswarm()+ 
   scale_fill_manual(values=time.colors) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
         panel.background = element_blank(), axis.line = element_line(colour = "black")) +
   scale_x_discrete(name = "") + scale_y_log10()
 
 print(p)
-
 
 dev.off()
 
@@ -473,28 +472,23 @@ dev.off()
 
 pdf(paste0(panel.directory, "Figure_7g.pdf"), width = 5, height=4, useDingbats = F)
 
-## to summarize the data appropriately, I compute for each subclass the standard error of the mean
+to.plot <- data.frame(Age=subset$Age[subset$Sample.type %in% c("Primary", "Metastasis")]/365,
+                      Delta=deltas[1, subset$Sample.type %in% c("Primary", "Metastasis")],
+                      Subtype=subset$Telomere.maintenance.mechanism[subset$Sample.type %in% c("Primary", "Metastasis")])
 
-to.plot <- data.frame(delta.mean = sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
-  mean(deltas[1,subset$Telomere.maintenance.mechanism==x & subset$Sample.type %in% c("Primary", "Metastasis")])}), 
-  delta.sd =sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
-    sqrt(sum((deltas[2,subset$Telomere.maintenance.mechanism==x& subset$Sample.type %in% c("Primary", "Metastasis")])^2))/sum(subset$Telomere.maintenance.mechanism==x& subset$Sample.type %in% c("Primary", "Metastasis"))}),
-  Subtype=unique(subset$Telomere.maintenance.mechanism))
 
 to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT", "None"),]
-
 to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT", "None"))
 
-addWorksheet(wb, "g")
-writeData(wb, "g", to.plot) 
-
-
-p <- ggplot(to.plot, aes(x=Subtype, y=delta.mean, ymin=delta.mean - delta.sd, ymax=delta.mean+delta.sd)) + 
-  geom_pointrange()+ scale_y_continuous(limits=c(0,1)) + 
+p <- ggplot(to.plot, aes(x=Subtype, y=Delta)) + 
+  geom_boxplot()+ geom_beeswarm() + scale_y_continuous(limits=c(0,1)) + 
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
-print(p)
+p
+addWorksheet(wb, "g")
+writeData(wb, "g", to.plot) 
+
 dev.off()
 
 
@@ -508,25 +502,18 @@ mean(deltas[1,tumors.no.tmm])
 
 pdf(paste0(panel.directory, "Figure_7h.pdf"), width = 5, height=4, useDingbats = F)
 
-## to summarize the data appropriately, I compute for each subclass the standard error of the mean
+to.plot <- data.frame(Age=subset$Age[subset$Sample.type %in% c("Primary", "Metastasis")]/365,
+                      Division.rate=division.rate[1, subset$Sample.type %in% c("Primary", "Metastasis")],
+                      Subtype=subset$Telomere.maintenance.mechanism[subset$Sample.type %in% c("Primary", "Metastasis")])
 
-
-to.plot <- data.frame(division.rate.mean = sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
-  mean(division.rate[1,subset$Telomere.maintenance.mechanism==x & subset$Sample.type %in% c("Primary", "Metastasis")])}), 
-  division.rate.sd =sapply(unique(subset$Telomere.maintenance.mechanism), function(x){
-    sqrt(sum((division.rate[2,subset$Telomere.maintenance.mechanism==x & subset$Sample.type %in% c("Primary", "Metastasis")])^2))/sum(subset$Telomere.maintenance.mechanism==x & subset$Sample.type %in% c("Primary", "Metastasis"))}),
-  Telomere.maintenance.mechanism=unique(subset$Telomere.maintenance.mechanism))
-
-to.plot <- to.plot[to.plot$Telomere.maintenance.mechanism %in% c("MNA", "TERT", "ALT", "None"),]
-
-to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism, levels=c("MNA", "TERT", "ALT", "None"))
+to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT", "None"),]
+to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT", "None"))
 
 addWorksheet(wb, "h")
 writeData(wb, "h", to.plot) 
 
-p <- ggplot(to.plot, aes(x=Telomere.maintenance.mechanism, y=division.rate.mean, ymin=division.rate.mean - division.rate.sd,
-                         ymax=division.rate.mean+division.rate.sd)) + 
-  geom_pointrange()+ scale_y_continuous(limits=c(0, 1.1*max(to.plot$division.rate.mean + to.plot$division.rate.sd)))+
+p <- ggplot(to.plot, aes(x=Subtype, y=Division.rate)) + 
+  geom_boxplot()+ geom_beeswarm() + scale_y_continuous(limits=c(0, 1.1*max(to.plot$Division.rate )))+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=10),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
