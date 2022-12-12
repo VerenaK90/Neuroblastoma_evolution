@@ -1,12 +1,13 @@
 ## Reproduce Fig. 5
 ##############################################################################################################################################
 ## load settings and libraries
-source("./Settings.R")
+source("./Nextcloud/NB_manuscript/Submission_NG/RevisionII//Plots_and_scripts/Custom_scripts/Settings.R")
 
 load(paste0(rdata.directory, "MRCA_timing.RData"))
 
 ## source data:
 wb <- createWorkbook()
+wb.s <- createWorkbook()
 
 ## store figure panels
 panel.directory <- paste0(output.directory, "Figure5/")
@@ -15,142 +16,113 @@ if(!dir.exists(panel.directory)){
   dir.create(panel.directory)
 }
 
+
 source(paste0(custom.script.directory, "Survival_analysis.R"))
-
-
 ##########################################################################################################################################
-## Figure 5a: Odds ratio for covariates with significant enrichment in early or late MRCAs
+## Figure 5 a,b: Survival curves, overall survival for validation cohort only
 
-to.plot <- joined.p.value.table
-to.plot <- to.plot[to.plot$p.value < 0.05,]
-to.plot$Parameter <- factor(to.plot$Parameter, levels=c("Sex", "TMM.binary", "Stage.binary", "Age.binary", "Triploidy",
-                                                        "7.gain", "17.gain",
-                                                        "1p.deletion", "1q.gain", "7q.gain", "11q.deletion", "17q.gain"))
+addWorksheet(wb, "a")
+writeData(wb, "a",  data.frame(Time=EFS.fit.validation$time, n.Risk = EFS.fit.validation$n.risk, 
+                               Category=c(rep(names(EFS.fit.validation$strata)[1], EFS.fit.validation$strata[1]),
+                                          rep(names(EFS.fit.validation$strata)[2], EFS.fit.validation$strata[2])),
+                               Censored=EFS.fit.validation$n.censor, Event = EFS.fit.validation$n.event, Survival=EFS.fit.validation$surv,
+                               LowerCI=EFS.fit.validation$lower, UpperCI=EFS.fit.validation$upper))
 
-addWorksheet(wb, "5a")
-writeData(wb, "5a", to.plot)
+chars <- capture.output(EFS.fit.validation.stats)
 
-
-pdf(paste0(panel.directory,"Figure_5a.pdf"), useDingbats = F)
-
-ggplot(to.plot, aes(y=odds.ratio, ymin=odds.ratio.l, ymax=odds.ratio.u, x=Parameter)) + coord_flip() + 
-  geom_pointrange() + geom_hline(yintercept = 1, linetype=2) + scale_y_log10() + annotation_logticks(sides = "b")
-
-dev.off()
-
-##########################################################################################################################################
-## Figure 5b, enrichment of TMM mechanisms among tumors with early and late MRCA
-
-pdf(paste0(panel.directory,"Figure_5b.pdf"), useDingbats = F)
-
-to.plot <- joined.categorized.by.MRCA[,c("MRCA.time", "Telomere.maintenance.mechanism")]
-
-to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism,
-                                                 levels = c("MNA", "ALT", "TERT", "Multiple", "None"))
+writeData(wb, sheet = "a", chars, startCol = 10)
 
 addWorksheet(wb, "b")
-writeData(wb, "b", to.plot, rowNames = F)
+writeData(wb, "b", data.frame(Time=survival.fit.validation$time, n.Risk = survival.fit.validation$n.risk, 
+                              Category=c(rep(names(survival.fit.validation$strata)[1], survival.fit.validation$strata[1]),
+                                         rep(names(survival.fit.validation$strata)[2], survival.fit.validation$strata[2])),
+                              Censored=survival.fit.validation$n.censor, Event = survival.fit.validation$n.event, Survival=survival.fit.validation$surv,
+                              LowerCI=survival.fit.validation$lower, UpperCI=survival.fit.validation$upper))
 
-ggplot(to.plot, aes(x=MRCA.time, fill=Telomere.maintenance.mechanism)) +
-  geom_bar(position = position_dodge2(preserve = "single")) +
-  scale_fill_manual(values=telomere.colors)  + scale_y_continuous(name="# Tumors")
+chars <- capture.output(survival.fit.validation.stats)
+
+writeData(wb, sheet = "b", chars, startCol = 10)
+
+
+pdf(paste0(panel.directory,"Figure_5a_b.pdf"), useDingbats = F)
+
+ggsurvplot(EFS.fit.validation, data = categorized.by.MRCA.validation, risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
+
+ggsurvplot(survival.fit.validation, data = categorized.by.MRCA.validation, risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0,10)) 
 
 dev.off()
 
 
 ##########################################################################################################################################
-## Figure 5c, stratify MRCA by TMM
+## Figure 5c, d: Survival curves, overall survival, event-free survival
+
+addWorksheet(wb, "c")
+writeData(wb, "c", data.frame(Time=joined.EFS.fit$time, n.Risk = joined.EFS.fit$n.risk, 
+                              Category=c(rep(names(joined.EFS.fit$strata)[1], joined.EFS.fit$strata[1]),
+                                         rep(names(joined.EFS.fit$strata)[2], joined.EFS.fit$strata[2])),
+                              Censored=joined.EFS.fit$n.censor, Event = joined.EFS.fit$n.event, Survival=joined.EFS.fit$surv,
+                              LowerCI=joined.EFS.fit$lower, UpperCI=joined.EFS.fit$upper))
+
+chars <- capture.output(joined.EFS.fit.stats)
+
+writeData(wb, sheet = "c", chars, startCol = 10)
 
 pdf(paste0(panel.directory,"Figure_5c.pdf"), useDingbats = F)
 
-to.plot <- data.frame(MRCA=mutation.time.mrca[primary.tumors.discovery,]$Mean,
-                      MRCA.lower = mutation.time.mrca[primary.tumors.discovery,]$Min,
-                      MRCA.upper = mutation.time.mrca[primary.tumors.discovery,]$Max,
-                      TMM = sample.information.discovery[primary.tumors.discovery,]$Telomere.maintenance.mechanism)
-
-primary.tumors.validation <- rownames(sample.information.validation[sample.information.validation$Sample.type %in% c("Primary", "Metastasis"),])
-to.plot <- rbind(to.plot,
-                 data.frame(MRCA=mutation.time.mrca[primary.tumors.validation,]$Mean,
-                            MRCA.lower = mutation.time.mrca[primary.tumors.validation,]$Min,
-                            MRCA.upper = mutation.time.mrca[primary.tumors.validation,]$Max,
-                            TMM = sample.information.validation[sample.information.validation$Sample.type %in% c("Primary", "Metastasis"),]$Telomere.maintenance.mechanism) )
-
-to.plot <- to.plot[order(to.plot$MRCA),]
-
-to.plot$MRCA <- to.plot$MRCA/3.3/10^3
-to.plot$MRCA.lower <- to.plot$MRCA.lower/3.3/10^3
-to.plot$MRCA.upper <- to.plot$MRCA.upper/3.3/10^3
-
-addWorksheet(wb, "c")
-writeData(wb, "c", to.plot)
-
-
-p <- ggplot(data = to.plot[to.plot$TMM=="MNA",],
-            aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
-                ymin =  sapply(sort(MRCA), function(x){
-                  sum(MRCA.upper <= x)
-                })/length(MRCA),
-                ymax= sapply(sort(MRCA), function(x){
-                  sum(MRCA.lower <= x)
-                })/length(MRCA),
-                fill=TMM
-            )) +
-  geom_stepribbon(col=NA)+
-  stat_ecdf(col="darkgrey") +
-  scale_color_manual(values=telomere.colors) + 
-  scale_fill_manual(values=alpha(telomere.colors)) +
-  scale_x_continuous(name = "SSNVs/Mb")+
-  theme( panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-         panel.background = element_blank(), axis.line = element_line(colour = "black")) + scale_y_continuous(name = "Fraction of tumors") 
-
-
-p <- p +
-  geom_stepribbon(data = to.plot[to.plot$TMM=="ALT",],
-                  aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
-                      ymin =  sapply(sort(MRCA), function(x){
-                        sum(MRCA.upper <= x)
-                      })/length(MRCA),
-                      ymax= sapply(sort(MRCA), function(x){
-                        sum(MRCA.lower <= x)
-                      })/length(MRCA)),col=NA)+ 
-  stat_ecdf(data = to.plot[to.plot$TMM=="ALT",], aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA))),
-            col="darkgrey") 
-
-
-p <- p + geom_stepribbon(data = to.plot[to.plot$TMM=="TERT",],
-                         aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
-                             ymin =  sapply(sort(MRCA), function(x){
-                               sum(MRCA.upper <= x)
-                             })/length(MRCA),
-                             ymax= sapply(sort(MRCA), function(x){
-                               sum(MRCA.lower <= x)
-                             })/length(MRCA)),col="lightgrey") + 
-  stat_ecdf(data = to.plot[to.plot$TMM=="TERT",],
-            aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA))
-            ), col="darkgrey") 
-
-
-
-p <- p+ geom_stepribbon(data = to.plot[to.plot$TMM=="None",],
-                        aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA)),
-                            ymin =  sapply(sort(MRCA), function(x){
-                              sum(MRCA.upper <= x)
-                            })/length(MRCA),
-                            ymax= sapply(sort(MRCA), function(x){
-                              sum(MRCA.lower <= x)
-                            })/length(MRCA)),col="lightgrey") + stat_ecdf(data = to.plot[to.plot$TMM=="None",],
-                                                                          aes(x=MRCA, y=seq(1/length(MRCA),1,length.out = length(MRCA))
-                                                                          ),
-                                                                          col="darkgrey")
-
-
-
-print(p)
-
+ggsurvplot(joined.EFS.fit, data = joined.categorized.by.MRCA, risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0, 10), break.x.by=5, cex=8, linewidth=0.8) 
 
 dev.off()
 
+
+addWorksheet(wb, "d")
+writeData(wb, "d", data.frame(Time=joined.survival.fit$time, n.Risk = joined.survival.fit$n.risk, 
+                              Category=c(rep(names(joined.survival.fit$strata)[1], joined.survival.fit$strata[1]),
+                                         rep(names(joined.survival.fit$strata)[2], joined.survival.fit$strata[2])),
+                              Censored=joined.survival.fit$n.censor, Event = joined.survival.fit$n.event, Survival=joined.survival.fit$surv,
+                              LowerCI=joined.survival.fit$lower, UpperCI=joined.survival.fit$upper))
+
+chars <- capture.output(joined.survival.fit.stats)
+
+writeData(wb, sheet = "d", chars, startCol = 10)
+
+pdf(paste0(panel.directory,"Figure_5d.pdf"), useDingbats = F)
+ggsurvplot(joined.survival.fit, data = joined.categorized.by.MRCA, risk.table = TRUE, pval=T, conf.int = T, color="strata", censor.shape=124,
+           palette=c("dodgerblue", "dodgerblue4"), xlim=c(0, 10), break.x.by=5, cex=8, linewidth=0.8) 
+dev.off()
+
+
+
+##############################################################################################################################################
+## Figure 4e, S4a: Cox regression
+
+pdf(paste0(panel.directory,"Figure_5e.pdf"), useDingbats = F, width = 4, height=4)
+
+ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS, data = joined.categorized.by.MRCA, main = "EFS") 
+
+dev.off()
+
+chars <- capture.output(summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS))
+
+addWorksheet(wb, "e")
+writeData(wb, sheet = "e", chars)
+
+
+pdf(paste0(panel.directory,"Figure_S5a.pdf"), useDingbats = F, width = 4, height=4)
+
+ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS, data = joined.categorized.by.MRCA, main="OS")
+
+dev.off()
+
+
+chars <- capture.output(summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS))
+
+addWorksheet(wb.s, "a")
+writeData(wb.s, sheet = "a", chars)
 
 ##########################################################################################################################################
 
 saveWorkbook(wb, file = paste0(panel.directory,"Source_data_Fig.5.xlsx"), overwrite=T)
+saveWorkbook(wb.s, file = paste0(panel.directory,"Source_data_Fig.S4.xlsx"), overwrite=T)
