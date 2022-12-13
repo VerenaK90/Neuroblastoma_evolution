@@ -41,13 +41,13 @@ for(i in rownames(subset)){
   mutational.burden.at.mrca[2] <- (mutation.time.mrca[i,]$Max - mutation.time.mrca[i,]$Min)*clock.like[i]/(2*1.96)
   age <- sample.information.discovery[rownames(sample.information.discovery)==i, "Age"]
   
-  n.generations <- mutational.burden.at.mrca*2/mutation.rate[1] + 9*log(10)/(1-delta[1])
-  n.generations[2] <- 2/mutation.rate[1]*mutational.burden.at.mrca[2] +
+  n.generations <- mutational.burden.at.mrca[1]*2/mutation.rate[1] + 9*log(10)/(1-delta[1])
+  n.generations[2] <- 2/mutation.rate[1]*mutational.burden.at.mrca[2]*2 +
     mutational.burden.at.mrca[1]*2/mutation.rate[1]^2*mutation.rate[2] + 9*log(10)/(1-delta[1])^2*delta[2]
   
   ## generations until MRCA 
-  n.generations.1 <- mutational.burden.at.mrca*2/mutation.rate[1]
-  n.generations.1[2] <- 2/mutation.rate[1]*mutational.burden.at.mrca[2]+
+  n.generations.1 <- mutational.burden.at.mrca[1]*2/mutation.rate[1]
+  n.generations.1[2] <- 2/mutation.rate[1]*mutational.burden.at.mrca[2]*2+
     mutational.burden.at.mrca[1]*2/mutation.rate[1]^2*mutation.rate[2] 
   n.generations.2 <- 9*log(10)/(1-delta[1])
   n.generations.2[2] <-  9*log(10)/(1-delta[1])^2*delta[2]
@@ -56,7 +56,7 @@ for(i in rownames(subset)){
   ## t.total = age + pregnancy
   t.total <- age + 250
   ## initiation is the number of generations until tumor initiation divided by the total number of generations times the total time
-  t.init <- mutational.burden.at.mrca*2/mutation.rate[1]/n.generations[1]*t.total
+  t.init <- mutational.burden.at.mrca[1]*2/mutation.rate[1]/n.generations[1]*t.total
   t.init[2] <- t.total*(n.generations.1[1]*n.generations.2[1]+n.generations.2[1]*n.generations.1[2])/(n.generations.1[1]+n.generations.2[1])^2
   
   

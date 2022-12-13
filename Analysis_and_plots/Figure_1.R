@@ -206,12 +206,25 @@ to.plot <- data.frame(Counts = c(chromosomes.with.clonal.gains, chromosomes.with
 addWorksheet(wb, "c")
 writeData(wb, "c", to.plot) 
 
+## add a helper column to jitter the points
+to.plot$xcord<-apply(to.plot, 1, function(x){
+  if(x["CNVType"]=="Gains" & x["Clonality"]=="Clonal"){
+    0.8
+  }else if(x["CNVType"]=="Gains" & x["Clonality"]=="Subclonal"){
+    1.2
+  }else if(x["CNVType"]=="Loss" & x["Clonality"]=="Clonal"){
+    1.8
+  }else{
+    2.2
+  }
+})
 
-ggplot(to.plot, aes(x=CNVType, y = Counts, fill = Clonality))+ geom_bar(stat="summary", fun.y="mean", position = "dodge", width=0.75)+
+ggplot(to.plot, aes(x=CNVType, y = Counts, fill = Clonality))+ geom_bar(stat="summary", fun.y="mean", position = "dodge", width=0.75, col="black")+
   geom_errorbar(stat="summary", position = "dodge", width=0.75) + scale_y_continuous(name="# Chromosomes")+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), text=element_text(size=12),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))+
-  scale_fill_manual(values = c(Clonal = "black", Subclonal = "grey" )) + theme(legend.position = "bottom")
+  scale_fill_manual(values = c(Clonal = "white", Subclonal = "grey" )) + theme(legend.position = "bottom") +
+  geom_point(aes(x=xcord), position=position_jitter(width =.1, height = 0))
 
 dev.off()
 
@@ -431,19 +444,19 @@ for(i in unique(to.plot$Signature)){
   p[[length(p) + 1]] <- ggplot(to.plot[to.plot$Signature==i,], aes(x=Exposure.All*100, y=Exposure.Clonal*100)) + 
     geom_point(col=sig.colors[i], shape=1, size=0.5) +
     geom_abline(slope = 1, intercept = 0) + ggtitle(i) + scale_x_continuous("% all SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + 
-    scale_y_continuous("% clonal SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + stat_cor(size=1, p.accuracy = 0.001) + 
+    scale_y_continuous("% clonal SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + stat_cor(size=1, p.accuracy = 1e-100) + 
     theme(aspect.ratio = 1)
   
   p[[length(p) + 1]] <- ggplot(to.plot[to.plot$Signature==i,], aes(x=Exposure.All*100, y=Exposure.Subclonal*100)) + 
     geom_point(col=sig.colors[i], shape=1, size=0.5) +
     geom_abline(slope = 1, intercept = 0) + ggtitle(i)+ scale_x_continuous("% all SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + 
-    scale_y_continuous("% subclonal SNVs", breaks = c(0, 50, 100), limits = c(0,100))   + stat_cor(size=1, p.accuracy = 0.001) + 
+    scale_y_continuous("% subclonal SNVs", breaks = c(0, 50, 100), limits = c(0,100))   + stat_cor(size=1, p.accuracy = 1e-100) + 
     theme(aspect.ratio = 1)
   
   p[[length(p) + 1]] <- ggplot(to.plot[to.plot$Signature==i,], aes(x=Exposure.Clonal*100, y=Exposure.Subclonal*100)) + 
     geom_point(col=sig.colors[i], shape=1, size=0.5) +
     geom_abline(slope = 1, intercept = 0) + ggtitle(i)+ scale_x_continuous("% clonal SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + 
-    scale_y_continuous("% subclonal SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + stat_cor(size=1, p.accuracy = 0.001) + 
+    scale_y_continuous("% subclonal SNVs", breaks = c(0, 50, 100), limits = c(0,100)) + stat_cor(size=1, p.accuracy = 1e-100) + 
     theme(aspect.ratio = 1)
 }
 

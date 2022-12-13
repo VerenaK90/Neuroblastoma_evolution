@@ -63,9 +63,9 @@ fit.directory.growth <- "./Processed_data/Model_fits_tumor_growth//"
 
 
 ##############################################################################################################################################
-## Define samples to use, meta information and colors
+## Define samples to use, meta information and colors for the discovery cohort
 
-sample.information.discovery <- read.xlsx(paste0(meta.data, "Supplementary Table 1.xlsx"), sheet = "Discovery")
+sample.information.discovery <- read.xlsx(paste0(meta.data, "Supplementary Table 1.xlsx"), sheet = "Supplementary Table 1", startRow = 4)
 rownames(sample.information.discovery) <- sample.information.discovery$Tumor_ID
 colnames(sample.information.discovery) <- replace(colnames(sample.information.discovery),
                                                   colnames(sample.information.discovery)=="Age.(days)", "Age") 
@@ -105,9 +105,9 @@ diploid.tumors.discovery <- rownames(sample.information.discovery[sample.informa
 
 
 ##############################################################################################################################################
-## Additional tumors, validation cohort
+## Validation cohort
 
-sample.information.validation <- read.xlsx(paste0(meta.data, "Supplementary Table 1.xlsx"), sheet = "Validation")
+sample.information.validation <- read.xlsx(paste0(meta.data, "Supplementary Table 1.xlsx"), sheet = "Supplementary Table 6", startRow = 4)
 rownames(sample.information.validation) <- sample.information.validation$Tumor_ID
 
 tumors.validation <- rownames(sample.information.validation)
@@ -155,7 +155,7 @@ telomere.colors <- c(ALT = "#d7191c",
                      TERT = "#ffffbf",
                      MNA = "#abdda4",
                      Multiple = "#2b83ba",
-                     None = "lightgrey")
+                     None = "#d3d3d3")
 
 clinical.risk.colors <- c(HR = "firebrick", IR = "darkgrey", observation = "lightgrey", LR="lightgrey")
 
