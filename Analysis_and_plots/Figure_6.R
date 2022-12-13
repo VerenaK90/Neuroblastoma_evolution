@@ -9,7 +9,7 @@ load(paste0(rdata.directory, "MRCA_timing.RData"))
 wb <- createWorkbook()
 
 ## store figure panels
-panel.directory <- paste0(output.directory, "Figure5/")
+panel.directory <- paste0(output.directory, "Figure6/")
 
 if(!dir.exists(panel.directory)){
   dir.create(panel.directory)
