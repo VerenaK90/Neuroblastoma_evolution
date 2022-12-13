@@ -1,7 +1,7 @@
 ## Reproduce Fig. 6
 ##############################################################################################################################################
 ## load settings and libraries
-source("./Nextcloud/NB_manuscript/Submission_NG/RevisionII//Plots_and_scripts/Custom_scripts/Settings.R")
+source("./Settings.R")
 
 load(paste0(rdata.directory, "MRCA_timing.RData"))
 
@@ -44,13 +44,6 @@ dev.off()
 pdf(paste0(panel.directory,"Figure_6b.pdf"), useDingbats = F)
 
 to.plot <- joined.categorized.by.MRCA[,c("MRCA.time", "Telomere.maintenance.mechanism")]
-to.plot$Sample <- sapply(rownames(to.plot), function(x){
-  if(x %in% tumors.discovery){
-    sample.information.discovery[x,]$Evolution_paper_Id
-    }else{
-      sample.information.validation[x,]$Evolution_paper_ID
-    }
-})
 
 to.plot$Telomere.maintenance.mechanism <- factor(to.plot$Telomere.maintenance.mechanism,
                                                  levels = c("MNA", "ALT", "TERT", "Multiple", "None"))
