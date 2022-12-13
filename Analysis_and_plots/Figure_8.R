@@ -4,7 +4,7 @@
 ##############################################################################################################################################
 ### Load libraries and settings
 
-source("./Nextcloud/NB_manuscript/Submission_NG/RevisionII//Plots_and_scripts/Custom_scripts/Settings.R")
+source("./Settings.R")
 
 load(paste0(rdata.directory, "Estimated_mutation_rate_per_day.RData"))
 
@@ -40,8 +40,7 @@ source(paste0(custom.script.directory, "Compute_evolutionary_parameters_from_gro
 
 ##############################################################################################################################################
 ### The fit was done with pyABC. In order to reproduce it, you need to create the input data by running Input_data.R
-### Then run Expansion_decay_continuous_evol.py. You need the files Expansion_decay_continuous_evol.R and
-### Expansion_decay_2_hits_continuous_evol.R
+### Then run Expansion_decay_continuous_evol.py. You need the files Expansion_decay_continuous_evol.R and Expansion_decay_2_hits_continuous_evol.R
 ### In analogy for homeostatic fits
 
 ##############################################################################################################################################
@@ -69,8 +68,8 @@ to.plot <- data.frame(x = P.MRCA$Density/3.3/10^3,
                       upper = max.probabilities,
                       Event = rep("Late", nrow(P.MRCA)))
 
-addWorksheet(wb, "a")
-writeData(wb, "a", to.plot)
+addWorksheet(wb, "b")
+writeData(wb, "b", to.plot)
 
 pdf(paste0(panel.directory, "Figure_8a.pdf"), width=5, height=3)
 print(ggplot(to.plot, aes(x=x, y = data, ymin = data-sd, ymax = data +sd, col=Event, fill=Event)) + geom_step() + geom_errorbar()+
@@ -132,7 +131,7 @@ writeData(wb, "c", to.store)
 
 pdf(paste0(panel.directory, "Figure_8c.pdf"), width=5, height=3)
 
-## add time of 1st trimester
+## add time of first trimester
 print(ggplot(to.plot.eca, aes(x=x, y = data, ymin = data-sd, ymax = data +sd, col=Event, fill=Event)) + geom_step() + geom_errorbar()+
         geom_stepribbon(aes(x=x, ymin = lower, ymax = upper), alpha=0.5)  +
         scale_fill_manual(values=manual.colors) + scale_color_manual(values=manual.colors) + 
@@ -355,7 +354,7 @@ writeData(wb, "e", to.store)
 
 pdf(paste0(panel.directory, "Figure_8e.pdf"), width=7, height=7, useDingbats = F)
 
-## mark time end of first trimester
+## mark theend of the first trimester
 ggplot(N.sim.cells, aes(x=t, ymin=ymin, ymax=ymax)) + geom_ribbon(fill="grey") + 
   geom_rect(data=data.frame(xmin = estimated.mutation.rate.per.day[1]*(12-2)*7/2/3.3/10^3, 
                             xmax = estimated.mutation.rate.per.day[3]*(12-2)*7/2/3.3/10^3, ymin = 0, ymax = 1), fill="grey", alpha=0.5,
@@ -466,7 +465,6 @@ p <- ggplot(to.plot, aes(x=Subtype, y=mu.eff.mean)) +
 
 print(p)
 
-
 dev.off()
 
 ##############################################################################################################################################
@@ -488,7 +486,6 @@ p <- ggplot(to.plot, aes(x=Subtype, y=Delta)) +
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 p
-
 addWorksheet(wb, "g")
 writeData(wb, "g", to.plot) 
 
@@ -505,15 +502,12 @@ mean(deltas[1,tumors.no.tmm])
 
 pdf(paste0(panel.directory, "Figure_8h.pdf"), width = 5, height=4, useDingbats = F)
 
-
 to.plot <- data.frame(Age=subset$Age[subset$Sample.type %in% c("Primary", "Metastasis")]/365,
                       Division.rate=division.rate[1, subset$Sample.type %in% c("Primary", "Metastasis")],
                       Subtype=subset$Telomere.maintenance.mechanism[subset$Sample.type %in% c("Primary", "Metastasis")])
 
-
 to.plot <- to.plot[to.plot$Subtype %in% c("MNA", "TERT", "ALT", "None"),]
 to.plot$Subtype <- factor(to.plot$Subtype, levels=c("MNA", "TERT", "ALT", "None"))
-
 
 addWorksheet(wb, "h")
 writeData(wb, "h", to.plot) 
@@ -595,6 +589,7 @@ estimated.mutation.rate.per.day.clock <- estimated.mutation.rate.per.day
 load(paste0(rdata.directory, "Estimated_mutation_rate_per_day.RData"))
 estimated.mutation.rate.per.day.all <- estimated.mutation.rate.per.day
 
+#source(paste0(custom.script.directory, "Input_data_NB_initiation_Clock_like.R"))
 load(paste0(rdata.directory, "Input_data_NB_initiation_clock_like.RData"))
 P.MRCA.clock <- P.MRCA
 P.ECA.clock <- P.ECA

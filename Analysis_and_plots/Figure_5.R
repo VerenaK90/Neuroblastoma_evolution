@@ -1,9 +1,12 @@
 ## Reproduce Fig. 5
 ##############################################################################################################################################
 ## load settings and libraries
-source("./Nextcloud/NB_manuscript/Submission_NG/RevisionII//Plots_and_scripts/Custom_scripts/Settings.R")
+source("./Settings.R")
 
+#source(paste0(custom.script.directory, "Oncoprint.R"))
+#source(paste0(custom.script.directory, "Mutation_densities_at_chromosomal_gains.R"))
 load(paste0(rdata.directory, "MRCA_timing.RData"))
+#load(paste0(rdata.directory, "Estimated_mutation_rate_per_day.RData"))
 
 ## source data:
 wb <- createWorkbook()
@@ -16,8 +19,12 @@ if(!dir.exists(panel.directory)){
   dir.create(panel.directory)
 }
 
-
 source(paste0(custom.script.directory, "Survival_analysis.R"))
+
+## MRCA cutpoint
+cutpoint <- 0.05
+
+
 ##########################################################################################################################################
 ## Figure 5 a,b: Survival curves, overall survival for validation cohort only
 
@@ -96,11 +103,11 @@ dev.off()
 
 
 ##############################################################################################################################################
-## Figure 4e, S4a: Cox regression
+## Figure 5e, S4a: Cox regression
 
 pdf(paste0(panel.directory,"Figure_5e.pdf"), useDingbats = F, width = 4, height=4)
 
-ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS, data = joined.categorized.by.MRCA, main = "EFS") 
+ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.EFS, data = joined.categorized.by.MRCA, main = "EFS")
 
 dev.off()
 
@@ -110,7 +117,7 @@ addWorksheet(wb, "e")
 writeData(wb, sheet = "e", chars)
 
 
-pdf(paste0(panel.directory,"Figure_S5a.pdf"), useDingbats = F, width = 4, height=4)
+pdf(paste0(panel.directory,"Figure_S4a.pdf"), useDingbats = F, width = 4, height=4)
 
 ggforest(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS, data = joined.categorized.by.MRCA, main="OS")
 
@@ -122,7 +129,7 @@ chars <- capture.output(summary(fit.coxph_MRCA_TMM_Stage_Age_RAS.OS))
 addWorksheet(wb.s, "a")
 writeData(wb.s, sheet = "a", chars)
 
-##########################################################################################################################################
+#########################################################################################################################################
 
 saveWorkbook(wb, file = paste0(panel.directory,"Source_data_Fig.5.xlsx"), overwrite=T)
 saveWorkbook(wb.s, file = paste0(panel.directory,"Source_data_Fig.S4.xlsx"), overwrite=T)

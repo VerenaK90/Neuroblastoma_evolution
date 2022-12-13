@@ -1,7 +1,7 @@
 ## Reproduce Fig. 4
 ##############################################################################################################################################
 ## load settings and libraries
-source("./Nextcloud/NB_manuscript/Submission_NG/RevisionII//Plots_and_scripts/Custom_scripts/Settings.R")
+source("./Settings.R")
 
 #source(paste0(custom.script.directory, "Oncoprint.R"))
 #source(paste0(custom.script.directory, "Mutation_densities_at_chromosomal_gains.R"))
@@ -10,6 +10,7 @@ load(paste0(rdata.directory, "MRCA_timing.RData"))
 
 ## source data:
 wb <- createWorkbook()
+wb.s <- createWorkbook()
 
 ## store figure panels
 panel.directory <- paste0(output.directory, "Figure4/")
@@ -18,8 +19,10 @@ if(!dir.exists(panel.directory)){
   dir.create(panel.directory)
 }
 
-
 source(paste0(custom.script.directory, "Survival_analysis.R"))
+
+## MRCA cutpoint
+cutpoint <- 0.05
 
 ##########################################################################################################################################
 ## Figure 4a, b: Survival curves, overall survival for discovery cohort only
@@ -61,7 +64,6 @@ dev.off()
 
 ##########################################################################################################################################
 ## Figure 4c, Mutation density at MRCA in the validation cohort
-cutpoint <- 0.05
 
 pdf(paste0(panel.directory, "Figure_4c.pdf"), width=3.5, height=3.5, useDingbats = F)
 
@@ -104,8 +106,6 @@ sample.information.validation$ECA.exists <- as.logical(sample.information.valida
 
 ##### Primary tumors, with and without treatment, metastases
 ## Plot early and late MRCA separately; further, stratify late cases w.r.t. number of events
-
-cutpoint <- 0.05#0.05
 
 plate <- list()
 plate.subset.list <- list()
@@ -393,7 +393,8 @@ annotate_figure(figure, top="Primary tumor / Metastasis")
 
 dev.off()
 
+
+
 ##########################################################################################################################################
 
 saveWorkbook(wb, file = paste0(panel.directory,"Source_data_Fig.4.xlsx"), overwrite=T)
-
