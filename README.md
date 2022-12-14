@@ -77,7 +77,7 @@ Please refer to the tutorial [Dynamics of neuroblastoma initiation](Example/Dyna
 ## Reproduce full analysis
 To reproduce the analysis do the following steps:
 
-- Download the example data set from the folder [Example_data](Example/Example_data) or the full data set from Mendeley (link will be provided upon publication) and store the files on your system. Each tumor contains four subfolders named “ACEseq” (containing the copy number estimates), “SNVs” (containing the vcf-file for somatic snvs), "Indels" (containing the vcf-file for somatic indels) and "SVs" (containing the vcf files for somatic SVs). On Mendeley, we also stored modeling results and signatures. In addition, you will need the information from Supplementary Table 1 (containing meta data of the samples). 
+- Download the example data set from the folder [Example_data](Example/Example_data) or the full data set from Mendeley (http://dx.doi.org/10.17632/m9pwjbm7c8.1) and store the files on your system. Each tumor contains four subfolders named “ACEseq” (containing the copy number estimates), “SNVs” (containing the vcf-file for somatic snvs), "Indels" (containing the vcf-file for somatic indels) and "SVs" (containing the vcf files for somatic SVs). On Mendeley, we also stored modeling results and signatures. In addition, you will need the information from Supplementary Table 1 (containing meta data of the samples). 
 - Install the package [NBevolution](NBevolution_0.0.0.9000.tar.gz) and download the folders [Analysis_and_plots](Analysis_and_plots) and [Meta_data](Meta_data).
 - Open the file [Settings.R](Analysis_and_plots/Settings.R) and perform the following steps. 
 -	Install the libraries as given in the top section of the file Settings.R. 
