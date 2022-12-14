@@ -37,7 +37,7 @@ pyABC v0.9.13
 The folder [Example_data](Example/Example_data) contains SNVs and copy number information for two primary-relapse-sample pairs. Each folder contains two subfolders, ACEseq, storing the copy number information (*comb_pro_extra*) and SNVs, storing the vcf file for somatic SNVs. Both files were generated using DKFZ inhouse-pipelines, which are described under https://github.com/DKFZ-ODCF/SNVCallingWorkflow and under https://github.com/DKFZ-ODCF/ACEseqWorkflow.
 
 ## Full dataset
-The full dataset (SNVs, Indels, SVs and CNVs for each tumor) can be downloaded from Mendeley (link will be provided upon publication). 
+The full dataset (SNVs, Indels, SVs and CNVs for each tumor) can be downloaded from Mendeley (http://dx.doi.org/10.17632/m9pwjbm7c8.1). 
 
 ## Custom code
 
