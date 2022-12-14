@@ -1,6 +1,6 @@
 # Neuroblastoma evolution
 
-This repository contains custom code associated with the manuscript "Genetic origin of neuroblastoma in early fetal development" by Verena Körber et al.
+This repository contains custom code associated with the manuscript "Neuroblastoma arises in early fetal development and its evolutionary duration predicts outcome" by Verena Körber et al. 
 
 To run the analysis, download the R package [NBevolution](NBevolution_0.0.0.9000.tar.gz) and install it. Thereafter, either refer to the 2 tutorials provided as pdfs in the folder [Example](Example) to run parts of the analysis on exemplary data or re-run the entire analysis by following the steps explained below. In order to re-run the full analysis you need to download the entire dataset from Mendeley as well as the supplementary tables from the manuscript.
 
